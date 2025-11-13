@@ -35,6 +35,7 @@ TikzView::TikzView(QWidget *parent) : QGraphicsView(parent)
 
     _scale = 2.5f;
     scale(2.5, 2.5);
+    _lastPinchScale = 1.0;
     
     // Enable pinch gesture recognition for Mac trackpad
     grabGesture(Qt::PinchGesture);
@@ -168,23 +169,40 @@ bool TikzView::event(QEvent *event)
             QPinchGesture *pinchGesture = static_cast<QPinchGesture*>(pinch);
             
             if (pinchGesture->state() == Qt::GestureStarted) {
-                // Set the view's transformation anchor to the gesture center point
-                setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
-            } else if (pinchGesture->state() == Qt::GestureUpdated) {
-                // Calculate zoom factor from pinch scale factor
-                qreal scaleFactor = pinchGesture->scaleFactor();
+                _lastPinchScale = 1.0;
+            }
+            
+            if (pinchGesture->state() == Qt::GestureUpdated) {
+                QPointF centerPoint = pinchGesture->centerPoint();
                 
-                // Apply limits to prevent extreme zooming
+                QPointF scenePosBeforeScale = mapToScene(centerPoint.toPoint());
+                
+                qreal totalScale = pinchGesture->totalScaleFactor();
+                qreal scaleFactor = totalScale / _lastPinchScale;
+                _lastPinchScale = totalScale;
+                
                 qreal newScale = _scale * scaleFactor;
-                if (newScale < 0.1f) scaleFactor = 0.1f / _scale;
-                if (newScale > 50.0f) scaleFactor = 50.0f / _scale;
+                if (newScale < 0.1f) {
+                    scaleFactor = 0.1f / _scale;
+                    _lastPinchScale = 0.1f / _scale * _lastPinchScale;
+                }
+                if (newScale > 50.0f) {
+                    scaleFactor = 50.0f / _scale;
+                    _lastPinchScale = 50.0f / _scale * _lastPinchScale;
+                }
                 
-                // Apply the scaling transformation
+                ViewportAnchor oldAnchor = transformationAnchor();
+                setTransformationAnchor(QGraphicsView::NoAnchor);
+                
                 scale(scaleFactor, scaleFactor);
                 _scale *= scaleFactor;
-            } else if (pinchGesture->state() == Qt::GestureFinished) {
-                // Restore the default transformation anchor
-                setTransformationAnchor(QGraphicsView::AnchorViewCenter);
+                
+                QPointF scenePosAfterScale = mapToScene(centerPoint.toPoint());
+                
+                QPointF delta = scenePosAfterScale - scenePosBeforeScale;
+                translate(delta.x(), delta.y());
+                
+                setTransformationAnchor(oldAnchor);
             }
             
             return true;

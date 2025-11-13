@@ -51,6 +51,7 @@ protected:
     bool event(QEvent *event) override;
 private:
     float _scale;
+    qreal _lastPinchScale;
 };
 
 #endif // TIKZVIEW_H

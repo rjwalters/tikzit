@@ -47,8 +47,6 @@ MainWindow::MainWindow(QWidget *parent) :
     _menu->setParent(this);
     setMenuBar(_menu);
 
-
-
     // initially, the source view should be collapsed
     QList<int> sz = ui->splitter->sizes();
     sz[0] = sz[0] + sz[1];
@@ -113,12 +111,11 @@ void MainWindow::open(QString fileName)
 
 
     if (_tikzDocument->parseSuccess()) {
-        statusBar()->showMessage("TiKZ parsed successfully", 2000);
-        //setWindowTitle("TiKZiT - " + _tikzDocument->shortName());
         _tikzScene->setTikzDocument(_tikzDocument);
         updateFileName();
     } else {
-        statusBar()->showMessage("Cannot read TiKZ source");
+        // show alert that parse failed
+        QMessageBox::warning(this, "Parse failed", "Cannot read TiKZ source");
     }
 
 }

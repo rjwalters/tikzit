@@ -54,7 +54,7 @@ MoveCommand::MoveCommand(TikzScene *scene,
 
 void MoveCommand::undo()
 {
-    foreach (NodeItem *ni, _scene->nodeItems()) {
+    for (NodeItem *ni : _scene->nodeItems()) {
         if (_oldNodePositions.contains(ni->node())) {
             ni->node()->setPoint(_oldNodePositions.value(ni->node()));
             ni->readPos();
@@ -67,7 +67,7 @@ void MoveCommand::undo()
 
 void MoveCommand::redo()
 {
-    foreach (NodeItem *ni, _scene->nodeItems()) {
+    for (NodeItem *ni : _scene->nodeItems()) {
         if (_newNodePositions.contains(ni->node())) {
             ni->node()->setPoint(_newNodePositions.value(ni->node()));
             ni->readPos();
@@ -99,7 +99,7 @@ void EdgeBendCommand::undo()
     _edge->setInAngle(_oldInAngle);
     _edge->setOutAngle(_oldOutAngle);
 
-    foreach(EdgeItem *ei, _scene->edgeItems()) {
+    for(EdgeItem *ei : _scene->edgeItems()) {
         if (ei->edge() == _edge) {
             ei->readPos();
 
@@ -118,7 +118,7 @@ void EdgeBendCommand::redo()
     _edge->setInAngle(_newInAngle);
     _edge->setOutAngle(_newOutAngle);
 
-    foreach(EdgeItem *ei, _scene->edgeItems()) {
+    for(EdgeItem *ei : _scene->edgeItems()) {
         if (ei->edge() == _edge) {
             ei->readPos();
 
@@ -171,7 +171,7 @@ void DeleteCommand::undo()
 
 void DeleteCommand::redo()
 {
-    foreach (Edge *e, _deleteEdges.values()) {
+    for (Edge *e : _deleteEdges.values()) {
         EdgeItem *ei = _scene->edgeItems()[e];
         _scene->edgeItems().remove(e);
         _scene->removeItem(ei);
@@ -180,7 +180,7 @@ void DeleteCommand::redo()
         _scene->graph()->removeEdge(e);
     }
 
-    foreach (Node *n, _deleteNodes.values()) {
+    for (Node *n : _deleteNodes.values()) {
         NodeItem *ni = _scene->nodeItems()[n];
         _scene->nodeItems().remove(n);
         _scene->removeItem(ni);
@@ -250,11 +250,11 @@ void AddEdgeCommand::undo()
     _scene->refreshZIndices();
 
     if (_selectEdge) {
-        foreach (NodeItem *ni, _scene->nodeItems()) {
+        for (NodeItem *ni : _scene->nodeItems()) {
             ni->setSelected(_selNodes.contains(ni->node()));
         }
 
-        foreach (EdgeItem *ei, _scene->edgeItems()) {
+        for (EdgeItem *ei : _scene->edgeItems()) {
             ei->setSelected(_selEdges.contains(ei->edge()));
         }
     }
@@ -510,7 +510,7 @@ ReflectNodesCommand::ReflectNodesCommand(TikzScene *scene, QSet<Node*> nodes, bo
 void ReflectNodesCommand::undo()
 {
     _scene->graph()->reflectNodes(_nodes, _horizontal);
-    foreach (NodeItem *ni, _scene->nodeItems()) {
+    for (NodeItem *ni : _scene->nodeItems()) {
         if (_nodes.contains(ni->node())) {
             ni->readPos();
         }
@@ -523,7 +523,7 @@ void ReflectNodesCommand::undo()
 void ReflectNodesCommand::redo()
 {
     _scene->graph()->reflectNodes(_nodes, _horizontal);
-    foreach (NodeItem *ni, _scene->nodeItems()) {
+    for (NodeItem *ni : _scene->nodeItems()) {
         if (_nodes.contains(ni->node())) {
             ni->readPos();
         }
@@ -542,7 +542,7 @@ RotateNodesCommand::RotateNodesCommand(TikzScene *scene, QSet<Node*> nodes, bool
 void RotateNodesCommand::undo()
 {
     _scene->graph()->rotateNodes(_nodes, !_clockwise);
-    foreach (NodeItem *ni, _scene->nodeItems()) {
+    for (NodeItem *ni : _scene->nodeItems()) {
         if (_nodes.contains(ni->node())) {
             ni->readPos();
         }
@@ -555,7 +555,7 @@ void RotateNodesCommand::undo()
 void RotateNodesCommand::redo()
 {
     _scene->graph()->rotateNodes(_nodes, _clockwise);
-    foreach (NodeItem *ni, _scene->nodeItems()) {
+    for (NodeItem *ni : _scene->nodeItems()) {
         if (_nodes.contains(ni->node())) {
             ni->readPos();
         }

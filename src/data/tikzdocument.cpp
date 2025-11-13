@@ -90,8 +90,8 @@ void TikzDocument::open(QString fileName)
     if (ass.parse(_tikz)) {
         _graph = newGraph;
         oldGraph->deleteLater();
-        foreach (Node *n, _graph->nodes()) n->attachStyle();
-        foreach (Edge *e, _graph->edges()) {
+        for (Node *n : _graph->nodes()) n->attachStyle();
+        for (Edge *e : _graph->edges()) {
             e->attachStyle();
             e->updateControls();
         }

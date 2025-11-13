@@ -112,8 +112,7 @@ int GraphElementData::indexOfKey(QString key)
 
 void GraphElementData::mergeData(GraphElementData *d)
 {
-    GraphElementProperty p;
-    foreach (p, d->properties()) {
+    for (GraphElementProperty p : d->properties()) {
         if (!hasProperty(p.key())) add(p);
     }
 }
@@ -242,9 +241,8 @@ QString GraphElementData::tikz() {
     QTextStream code(&str);
     code << "[";
 
-    GraphElementProperty p;
     bool first = true;
-    foreach(p, _properties) {
+    for(GraphElementProperty p : _properties) {
         if (!first) code << ", ";
         code << p.tikz();
         first = false;
@@ -269,7 +267,7 @@ QVector<GraphElementProperty> GraphElementData::properties() const
 GraphElementData *GraphElementData::pathData() const
 {
     GraphElementData *d = new GraphElementData();
-    foreach(GraphElementProperty p, _properties) {
+    for(GraphElementProperty p : _properties) {
         if (isPathProperty(p.key())) d->add(p);
     }
     return d;
@@ -278,7 +276,7 @@ GraphElementData *GraphElementData::pathData() const
 GraphElementData *GraphElementData::nonPathData() const
 {
     GraphElementData *d = new GraphElementData();
-    foreach(GraphElementProperty p, _properties) {
+    for(GraphElementProperty p : _properties) {
         if (!isPathProperty(p.key())) d->add(p);
     }
     return d;

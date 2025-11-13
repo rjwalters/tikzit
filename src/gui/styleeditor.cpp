@@ -218,7 +218,7 @@ void StyleEditor::refreshCategories()
     ui->category->clear();
 
     if (_styles != nullptr) {
-        foreach(QString c, _styles->categories()) {
+        for(QString c : _styles->categories()) {
             ui->category->addItem(c);
             ui->currentCategory->addItem(c);
         }
@@ -250,7 +250,7 @@ void StyleEditor::propertyChanged()
 void StyleEditor::refreshDisplay()
 {
     // enable all fields and block signals while we set their values
-    foreach (QWidget *w, _formWidgets) {
+    for (QWidget *w : _formWidgets) {
         w->blockSignals(true);
     }
 
@@ -387,13 +387,13 @@ void StyleEditor::refreshDisplay()
     } else {
 //        qDebug() << "null style update";
 
-        foreach (QWidget *w, _formWidgets) {
+        for (QWidget *w : _formWidgets) {
             w->setEnabled(false);
         }
     }
 
     // unblock signals so we are ready for user input
-    foreach (QWidget *w, _formWidgets) {
+    for (QWidget *w : _formWidgets) {
         w->blockSignals(false);
     }
 }

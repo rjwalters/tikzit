@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 project(tikzit LANGUAGES CXX)
 
 if (NOT QT_VER)
-    set (QT_VER "Qt5")
+    set (QT_VER "Qt6")
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -15,10 +15,6 @@ find_package(${QT_VER} REQUIRED COMPONENTS Core Gui Widgets Network)
 find_package(BISON)
 find_package(FLEX)
 
-# use extra-cmake-modules to find poppler library
-# find_package(ECM REQUIRED NO_MODULE)
-# set(CMAKE_MODULE_PATH ${ECM_FIND_MODULE_DIR})
-# find_package(Poppler REQUIRED COMPONENTS Core Qt6)
 
 include_directories(
     ${PROJECT_SOURCE_DIR}
@@ -137,17 +133,11 @@ add_executable(tikzit
     ${BISON_PARSER_OUTPUTS}
     ${QT_RESOURCES})
 
-# local poppler binaries for windows
-find_library(POPPLER_LIB poppler-cpp HINTS "${PROJECT_SOURCE_DIR}/poppler-21.11.0/Library/bin")
-
-include_directories(${PROJECT_SOURCE_DIR}/poppler-21.11.0/Library/include)
-# link_directories(${PROJECT_SOURCE_DIR}/poppler-21.11.0/Library/bin)
 
 target_link_libraries(${PROJECT_NAME}
     "${QT_VER}::Core"
     "${QT_VER}::Gui"
     "${QT_VER}::Widgets"
-    "${QT_VER}::Network"
-    ${POPPLER_LIB})
+    "${QT_VER}::Network")
 
 install (TARGETS tikzit DESTINATION bin)

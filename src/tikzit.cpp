@@ -165,7 +165,7 @@ void Tikzit::newTikzStyles()
             _styles->deleteLater();
             _styles = st;
 
-            foreach (MainWindow *w, _windows) {
+            for (MainWindow *w : _windows) {
                 w->tikzScene()->reloadStyles();
             }
         } else {
@@ -250,7 +250,7 @@ void Tikzit::open(QString fileName)
         else
         {
             bool found = false;
-            foreach (MainWindow *w, _windows) {
+            for (MainWindow *w : _windows) {
                 if (w->tikzDocument()->fileName() == fileName) {
                     w->raise();
                     w->activateWindow();
@@ -299,7 +299,7 @@ bool Tikzit::loadStyles(QString fileName)
             _styles->deleteLater();
             _styles = st;
 
-            foreach (MainWindow *w, _windows) {
+            for (MainWindow *w : _windows) {
                 w->tikzScene()->reloadStyles();
             }
             return true;

@@ -13,7 +13,7 @@ StyleList::StyleList(bool edgeStyles, QObject *parent) : QAbstractListModel(pare
 
 Style *StyleList::style(QString name)
 {
-    foreach (Style *s, _styles)
+    for (Style *s : _styles)
         if (s->name() == name) return s;
     return nullptr;
 }
@@ -79,7 +79,7 @@ QString StyleList::tikz()
 int StyleList::numInCategory() const
 {
     int c = 0;
-    foreach (Style *s, _styles) {
+    for (Style *s : _styles) {
         if (_category == "" || s->isNone() || s->category() == _category) {
             ++c;
         }

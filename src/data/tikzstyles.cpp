@@ -147,7 +147,7 @@ QStringList TikzStyles::categories() const
         ns = _nodeStyles->style(i);
         cats.insert(ns->propertyWithDefault("tikzit category", "", false), true);
     }
-    //foreach (EdgeStyle *s, _edgeStyles) cats << s->propertyWithDefault("tikzit category", "", false);
+    //for (EdgeStyle *s : _edgeStyles) cats << s->propertyWithDefault("tikzit category", "", false);
     return QStringList(cats.keys());
 }
 

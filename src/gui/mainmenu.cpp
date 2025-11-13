@@ -41,7 +41,7 @@ MainMenu::MainMenu()
 void MainMenu::addDocks(QMenu *m)
 {
     ui.menuView->addSeparator();
-    foreach (QAction *a, m->actions()) {
+    for (QAction *a : m->actions()) {
         if (!a->isSeparator()) ui.menuView->addAction(a);
     }
 }
@@ -60,7 +60,7 @@ void MainMenu::updateRecentFiles()
     //qDebug() << "update:" << recentFiles;
 
     QAction *action;
-    foreach (QString f, recentFiles) {
+    for (QString f : recentFiles) {
         QFileInfo fi(f);
         action = new QAction(fi.fileName(), ui.menuOpen_Recent);
         action->setData(f);

@@ -11,7 +11,7 @@ void PathItem::readPos()
 {
     QPainterPath painterPath;
 
-    foreach (Edge *e, _path->edges()) {
+    for (Edge *e : _path->edges()) {
         e->updateControls();
 
         if (e == _path->edges().first())

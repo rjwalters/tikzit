@@ -18,7 +18,7 @@ void Path::addEdge(Edge *e)
 
 void Path::removeEdges()
 {
-    foreach(Edge *e, _edges) {
+    for(Edge *e : _edges) {
         e->setPath(nullptr);
     }
     _edges.clear();

@@ -6,8 +6,7 @@
 # script is tested on a clean Ubuntu 18.04, after running:
 # 
 # apt-get -y install \
-#  flex bison qt5-default libpoppler-dev \
-#  libpoppler-qt5-dev
+#  flex bison qt6-base-dev libgl1-mesa-dev
 #
 
 # system library directory
@@ -74,16 +73,16 @@ cp ../../tikzit opt
 cp -R ../../share .
 
 # add Qt libs. Keep shortened lib names as symlinks.
-cp --no-dereference $QTLIBDIR/libQt5Core.so* lib
-cp --no-dereference $QTLIBDIR/libQt5DBus.so* lib
-cp --no-dereference $QTLIBDIR/libQt5Widgets.so* lib
-cp --no-dereference $QTLIBDIR/libQt5Svg.so* lib
-cp --no-dereference $QTLIBDIR/libQt5Network.so* lib
-cp --no-dereference $QTLIBDIR/libQt5Gui.so* lib
-cp --no-dereference $QTLIBDIR/libQt5XcbQpa.so* lib
-cp --no-dereference $QTLIBDIR/libQt5Xml.so* lib
+cp --no-dereference $QTLIBDIR/libQt6Core.so* lib
+cp --no-dereference $QTLIBDIR/libQt6DBus.so* lib
+cp --no-dereference $QTLIBDIR/libQt6Widgets.so* lib
+cp --no-dereference $QTLIBDIR/libQt6Svg.so* lib
+cp --no-dereference $QTLIBDIR/libQt6Network.so* lib
+cp --no-dereference $QTLIBDIR/libQt6Gui.so* lib
+cp --no-dereference $QTLIBDIR/libQt6XcbQpa.so* lib
+cp --no-dereference $QTLIBDIR/libQt6Xml.so* lib
 
-# add libicu, which is required by Qt5 for unicode support
+# add libicu, which is required by Qt6 for unicode support
 cp --no-dereference $LIBDIR/libicuuc.so* lib
 cp --no-dereference $LIBDIR/libicui18n.so* lib
 cp --no-dereference $LIBDIR/libicudata.so* lib
@@ -96,21 +95,7 @@ cp --no-dereference $LIBDIR/libxcb-xinerama.so* lib
 cp --no-dereference $LIBDIR/libssl.so* lib
 cp --no-dereference $LIBDIR/libcrypto.so* lib
 
-# add poppler libs
-# cp --no-dereference $LIBDIR/libpoppler.so* lib
-# cp --no-dereference $LIBDIR/libpoppler-cpp.so* lib
-
-# add dependencies of poppler that are on Ubuntu 18.04,
-# but maybe not other distros...
-# cp --no-dereference $LIBDIR/libgraphite2.so.3* lib
-# cp --no-dereference $LIBDIR/libharfbuzz.so.0* lib
-# cp --no-dereference $LIBDIR/libjbig.so.0* lib
-# cp --no-dereference $LIBDIR/libjpeg.so.8* lib
-# cp --no-dereference $LIBDIR/liblcms2.so.2* lib
-# cp --no-dereference $LIBDIR/libpng16.so.16* lib
-# cp --no-dereference $SYSLIBDIR/libz.so.1* lib
-
-# add Qt plugins used by TikZiT
+# add some libraries which are not installed by default on Ubuntu by TikZiT
 cp -R $PLUGINDIR/platforms plugins
 cp -R $PLUGINDIR/imageformats plugins
 cp -R $PLUGINDIR/platforminputcontexts plugins

@@ -8,14 +8,13 @@ matrix:
     compiler: clang
     env:
     - FILE=tikzit-osx.dmg
-    - QTVER=511
+    - QTVER=6
     - DEPLOY_TIKZIT=1
 before_install: 
 install:
 - brew update
-- brew install qt5
-- brew link --force qt5
-- brew install poppler
+- brew install qt
+- brew link --force qt
 script:
 - qmake -v
 - qmake -r

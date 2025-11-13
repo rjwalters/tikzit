@@ -85,25 +85,25 @@ Graph *TikzScene::graph()
 void TikzScene::graphReplaced()
 {
 
-	foreach (NodeItem *ni, _nodeItems) {
+	for (NodeItem *ni : _nodeItems) {
         removeItem(ni);
         delete ni;
     }
     _nodeItems.clear();
 
-    foreach (EdgeItem *ei, _edgeItems) {
+    for (EdgeItem *ei : _edgeItems) {
         removeItem(ei);
         delete ei;
     }
     _edgeItems.clear();
 
-    foreach (PathItem *pi, _pathItems) {
+    for (PathItem *pi : _pathItems) {
         removeItem(pi);
         delete pi;
     }
     _pathItems.clear();
 
-    foreach (Edge *e, graph()->edges()) {
+    for (Edge *e : graph()->edges()) {
 		//e->attachStyle();
         //e->updateControls();
         EdgeItem *ei = new EdgeItem(e);
@@ -118,7 +118,7 @@ void TikzScene::graphReplaced()
         }
     }
 
-    foreach (Node *n, graph()->nodes()) {
+    for (Node *n : graph()->nodes()) {
         //n->attachStyle();
         NodeItem *ni = new NodeItem(n);
         _nodeItems.insert(n, ni);
@@ -133,7 +133,7 @@ void TikzScene::extendSelectionUp()
 {
     bool found = false;
     qreal m = 0.0;
-    foreach (Node *n, getSelectedNodes()) {
+    for (Node *n : getSelectedNodes()) {
         if (!found) {
             m = n->point().y();
             found = true;
@@ -142,7 +142,7 @@ void TikzScene::extendSelectionUp()
         }
     }
 
-    foreach (NodeItem *ni, nodeItems().values()) {
+    for (NodeItem *ni : nodeItems().values()) {
         if (ni->node()->point().y() >= m) ni->setSelected(true);
     }
 }
@@ -151,7 +151,7 @@ void TikzScene::extendSelectionDown()
 {
     bool found = false;
     qreal m = 0.0;
-    foreach (Node *n, getSelectedNodes()) {
+    for (Node *n : getSelectedNodes()) {
         if (!found) {
             m = n->point().y();
             found = true;
@@ -160,7 +160,7 @@ void TikzScene::extendSelectionDown()
         }
     }
 
-    foreach (NodeItem *ni, nodeItems().values()) {
+    for (NodeItem *ni : nodeItems().values()) {
         if (ni->node()->point().y() <= m) ni->setSelected(true);
     }
 }
@@ -169,7 +169,7 @@ void TikzScene::extendSelectionLeft()
 {
     bool found = false;
     qreal m = 0.0;
-    foreach (Node *n, getSelectedNodes()) {
+    for (Node *n : getSelectedNodes()) {
         if (!found) {
             m = n->point().x();
             found = true;
@@ -178,7 +178,7 @@ void TikzScene::extendSelectionLeft()
         }
     }
 
-    foreach (NodeItem *ni, nodeItems().values()) {
+    for (NodeItem *ni : nodeItems().values()) {
         if (ni->node()->point().x() <= m) ni->setSelected(true);
     }
 }
@@ -187,7 +187,7 @@ void TikzScene::extendSelectionRight()
 {
     bool found = false;
     qreal m = 0.0;
-    foreach (Node *n, getSelectedNodes()) {
+    for (Node *n : getSelectedNodes()) {
         if (!found) {
             m = n->point().x();
             found = true;
@@ -196,7 +196,7 @@ void TikzScene::extendSelectionRight()
         }
     }
 
-    foreach (NodeItem *ni, nodeItems().values()) {
+    for (NodeItem *ni : nodeItems().values()) {
         if (ni->node()->point().x() >= m) ni->setSelected(true);
     }
 }
@@ -210,7 +210,7 @@ void TikzScene::mergeNodes()
 
     // build a map from locations to a chosen node at that location
     QMap<QPair<int,int>,Node*> m;
-    foreach (Node *n, selNodes) {
+    for (Node *n : selNodes) {
         // used fixed precision for hashing/comparing locations
         QPair<int,int> fpPoint(
           static_cast<int>(n->point().x() * 1000.0),
@@ -224,7 +224,7 @@ void TikzScene::mergeNodes()
 
     // build a second map from nodes to the node they will be merged with
     QMap<Node*,Node*> m1;
-    foreach (Node *n, graph()->nodes()) {
+    for (Node *n : graph()->nodes()) {
         QPair<int,int> fpPoint(
           static_cast<int>(n->point().x() * 1000.0),
           static_cast<int>(n->point().y() * 1000.0));
@@ -235,7 +235,7 @@ void TikzScene::mergeNodes()
     _tikzDocument->undoStack()->beginMacro("Merge nodes");
 
     // copy adjacent edges from nodes that will be deleted
-    foreach (Edge *e, graph()->edges()) {
+    for (Edge *e : graph()->edges()) {
         if (m1.contains(e->source()) || m1.contains(e->target())) {
             Edge *e1 = e->copy(&m1);
             AddEdgeCommand *cmd = new AddEdgeCommand(this, e1);
@@ -273,12 +273,12 @@ void TikzScene::reorderSelection(bool toFront)
     QSet<Node*> selNodes;
     QSet<Edge*> selEdges;
     getSelection(selNodes, selEdges);
-    foreach (Node *n, graph()->nodes()) {
+    for (Node *n : graph()->nodes()) {
         if (selNodes.contains(n)) nodeOrd1 << n;
         else nodeOrd << n;
     }
 
-    foreach (Edge *e, graph()->edges()) {
+    for (Edge *e : graph()->edges()) {
         if (selEdges.contains(e)) edgeOrd1 << e;
         else edgeOrd << e;
     }
@@ -300,7 +300,7 @@ void TikzScene::reverseSelectedEdges()
     // grab all the edges which are either selected themselves, or where
     // both their source and target nodes are selected
     QSet<Edge*> es;
-    foreach (Edge *e, graph()->edges()) {
+    for (Edge *e : graph()->edges()) {
         if ((_edgeItems[e] && _edgeItems[e]->isSelected()) ||
             (_nodeItems[e->source()] && _nodeItems[e->target()] &&
              _nodeItems[e->source()]->isSelected() &&
@@ -325,7 +325,7 @@ void TikzScene::makePath(bool duplicateEdges)
 
     // if no edges are selected, try to infer edges from nodes
     if (edges.isEmpty()) {
-        foreach(Edge *e, graph()->edges()) {
+        for(Edge *e : graph()->edges()) {
             if (selNodes.contains(e->source()) && selNodes.contains(e->target()))
                 edges << e;
         }
@@ -336,7 +336,7 @@ void TikzScene::makePath(bool duplicateEdges)
         return;
     }
 
-    foreach (Edge *e, edges) {
+    for (Edge *e : edges) {
         if (e->path() != nullptr && !duplicateEdges) {
             //QMessageBox::warning(nullptr, "Error", "Edges must not already be in another path.");
             // TODO: maybe we want to automatically split paths if edges are in a path already?
@@ -351,7 +351,7 @@ void TikzScene::makePath(bool duplicateEdges)
     oldEdges = edges;
 
     if (duplicateEdges) {
-        foreach (Edge *e, edges) {
+        for (Edge *e : edges) {
             Edge *e1 = e->copy();
             _tikzDocument->undoStack()->push(new AddEdgeCommand(this, e1, false, selNodes, selEdges));
             newEdges << e1;
@@ -374,26 +374,35 @@ void TikzScene::makePath(bool duplicateEdges)
     while (pLen < p.length()) {
         pLen = p.length();
         Edge *e = nullptr;
-        foreach (e, edges) {
-            Node *s = e->source();
-            Node *t = e->target();
+        for (Edge *edge : edges) {
+            Node *s = edge->source();
+            Node *t = edge->target();
             if (p.isEmpty()) {
-                p.append(e);
+                p.append(edge);
+                e = edge;
                 break;
             }
 
             Node *head = (flip.contains(p.first())) ? p.first()->target() : p.first()->source();
             Node *tail = (flip.contains(p.last())) ? p.last()->source() : p.last()->target();
 
-            if (s == head || t == head) {
-                if (s == head) flip << e;
-                p.prepend(e);
+            if (s == tail) {
+                p.append(edge);
+                e = edge;
                 break;
-            }
-
-            if (s == tail || t == tail) {
-                if (t == tail) flip << e;
-                p.append(e);
+            } else if (t == tail) {
+                p.append(edge);
+                flip.insert(edge);
+                e = edge;
+                break;
+            } else if (s == head) {
+                p.prepend(edge);
+                flip.insert(edge);
+                e = edge;
+                break;
+            } else if (t == head) {
+                p.prepend(edge);
+                e = edge;
                 break;
             }
         }
@@ -412,7 +421,7 @@ void TikzScene::makePath(bool duplicateEdges)
     // duplicate edges, just below the first original.
     QVector<Edge*> newEdgeOrder;
     bool firstEdge = true;
-    foreach (Edge *e, oldEdgeOrder) {
+    for (Edge *e : oldEdgeOrder) {
         if (oldEdges.contains(e)) {
             if (firstEdge) {
                 newEdgeOrder += p;
@@ -429,7 +438,7 @@ void TikzScene::makePath(bool duplicateEdges)
         graph()->nodes(), graph()->nodes(), oldEdgeOrder, newEdgeOrder));
 
     QMap<Edge*, GraphElementData*> oldEdgeData;
-    foreach (Edge *e, p) {
+    for (Edge *e : p) {
         if (e != p.first()) oldEdgeData[e] = e->data()->copy();
     }
 
@@ -445,14 +454,14 @@ void TikzScene::splitPath()
 
     // if no edges are selected, try to infer edges from nodes
     if (edges.isEmpty()) {
-        foreach(Edge *e, graph()->edges()) {
+        for(Edge *e : graph()->edges()) {
             if (selNodes.contains(e->source()) && selNodes.contains(e->target()))
                 edges << e;
         }
     }
 
     QSet<Path*> paths;
-    foreach (Edge *e, edges) {
+    for (Edge *e : edges) {
         if (e->path()) paths << e->path();
     }
 
@@ -462,7 +471,7 @@ void TikzScene::splitPath()
 void TikzScene::refreshZIndices()
 {
     qreal z = 0.0;
-    foreach (Edge *e, graph()->edges()) {
+    for (Edge *e : graph()->edges()) {
         if (e->path() && e == e->path()->edges().first()) {
             pathItems()[e->path()]->setZValue(z);
             edgeItems()[e]->setZValue(z + 0.1);
@@ -472,7 +481,7 @@ void TikzScene::refreshZIndices()
         z += 1.0;
     }
 
-    foreach (Node *n, graph()->nodes()) {
+    for (Node *n : graph()->nodes()) {
         nodeItems()[n]->setZValue(z);
         z += 1.0;
     }
@@ -510,7 +519,7 @@ void TikzScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
     switch (_tools->currentTool()) {
     case ToolPalette::SELECT:
         // check if we grabbed a control point of an edge
-        foreach (QGraphicsItem *gi, selectedItems()) {
+        for (QGraphicsItem *gi : selectedItems()) {
             if (EdgeItem *ei = dynamic_cast<EdgeItem*>(gi)) {
                 qreal dx, dy;
 
@@ -562,7 +571,7 @@ void TikzScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
 
             // save current node positions for undo support
             _oldNodePositions.clear();
-            foreach (QGraphicsItem *gi, selectedItems()) {
+            for (QGraphicsItem *gi : selectedItems()) {
                 if (NodeItem *ni = dynamic_cast<NodeItem*>(gi)) {
                     _oldNodePositions.insert(ni->node(), ni->node()->point());
                 }
@@ -573,7 +582,7 @@ void TikzScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
                 if (dynamic_cast<NodeItem*>(its[0])) {
                     _draggingNodes = true;
                 } else {
-                    foreach (QGraphicsItem *gi, its) {
+                    for (QGraphicsItem *gi : its) {
                         if (EdgeItem *ei = dynamic_cast<EdgeItem*>(gi)) {
                             _selectingEdge = ei->edge();
                             break;
@@ -587,7 +596,7 @@ void TikzScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
     case ToolPalette::VERTEX:
         break;
     case ToolPalette::EDGE:
-        foreach (QGraphicsItem *gi, items(_mouseDownPos)) {
+        for (QGraphicsItem *gi : items(_mouseDownPos)) {
             if (NodeItem *ni = dynamic_cast<NodeItem*>(gi)){
                 _edgeStartNodeItem = ni;
                 _edgeEndNodeItem = ni;
@@ -703,7 +712,7 @@ void TikzScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
             QPointF shift = mousePos - _mouseDownPos;
             shift = QPointF(round(shift.x()/GRID_SEP)*GRID_SEP, round(shift.y()/GRID_SEP)*GRID_SEP);
 
-            foreach (Node *n, _oldNodePositions.keys()) {
+            for (Node *n : _oldNodePositions.keys()) {
                 NodeItem *ni = _nodeItems[n];
 
 				// in (rare) cases, the graph can change while we are dragging
@@ -734,7 +743,7 @@ void TikzScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
     case ToolPalette::EDGE:
         if (_drawEdgeItem->isVisible()) {
             _edgeEndNodeItem = nullptr;
-            foreach (QGraphicsItem *gi, items(mousePos)) {
+            for (QGraphicsItem *gi : items(mousePos)) {
                 if (NodeItem *ni = dynamic_cast<NodeItem*>(gi)){
                     _edgeEndNodeItem = ni;
                     break;
@@ -784,7 +793,7 @@ void TikzScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
                 bool sel = edgeItems()[_selectingEdge]->isSelected();
                 Path *p = _selectingEdge->path();
                 if (p) {
-                    foreach (Edge *e, p->edges()) {
+                    for (Edge *e : p->edges()) {
                         if (e != _selectingEdge)
                             edgeItems()[e]->setSelected(sel);
                         nodeItems()[e->source()]->setSelected(sel);
@@ -800,7 +809,7 @@ void TikzScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
             if (_rubberBandItem->isVisible()) {
                 QPainterPath sel;
                 sel.addRect(_rubberBandItem->rect());
-                foreach (QGraphicsItem *gi, items()) {
+                for (QGraphicsItem *gi : items()) {
                     if (NodeItem *ni = dynamic_cast<NodeItem*>(gi)) {
                         if (sel.contains(toScreen(ni->node()->point()))) ni->setSelected(true);
                     }
@@ -817,7 +826,7 @@ void TikzScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
                 if (shift.x() != 0.0 || shift.y() != 0.0) {
                     QMap<Node*,QPointF> newNodePositions;
 
-                    foreach (QGraphicsItem *gi, selectedItems()) {
+                    for (QGraphicsItem *gi : selectedItems()) {
                         if (NodeItem *ni = dynamic_cast<NodeItem*>(gi)) {
                             ni->writePos();
                             newNodePositions.insert(ni->node(), ni->node()->point());
@@ -908,7 +917,7 @@ void TikzScene::keyReleaseEvent(QKeyEvent *event)
 
 
 
-    foreach (QGraphicsItem *it, selectedItems()) it->update();
+    for (QGraphicsItem *it : selectedItems()) it->update();
 }
 
 void TikzScene::keyPressEvent(QKeyEvent *event)
@@ -949,7 +958,7 @@ void TikzScene::keyPressEvent(QKeyEvent *event)
                 QMap<Node*,QPointF> newNodePositions;
                 QPointF pos;
 
-                foreach (QGraphicsItem *gi, selectedItems()) {
+                for (QGraphicsItem *gi : selectedItems()) {
                     if (NodeItem *ni = dynamic_cast<NodeItem*>(gi)) {
                         pos = ni->node()->point();
                         oldNodePositions.insert(ni->node(), pos);
@@ -990,7 +999,7 @@ void TikzScene::keyPressEvent(QKeyEvent *event)
                 // shift bend by deltaAngle or -deltaAngle (see below)
                 int sign = 1;
 
-                foreach (Edge *e, selEdges) {
+                for (Edge *e : selEdges) {
                     if (e->basicBendMode()) {
                         _tikzDocument->undoStack()->push(new ChangeEdgeModeCommand(this, e));
                     }
@@ -1024,7 +1033,7 @@ void TikzScene::keyPressEvent(QKeyEvent *event)
                 capture = true;
                 _tikzDocument->undoStack()->beginMacro("Adjust edges");
 
-                foreach (Edge *e, selEdges) {
+                for (Edge *e : selEdges) {
                     qreal oldWeight = e->weight();
                     // don't let weight drop below 0.1
                     if (oldWeight + deltaWeight > 0.099) {
@@ -1063,7 +1072,7 @@ void TikzScene::keyPressEvent(QKeyEvent *event)
         }
     }
 
-    foreach (QGraphicsItem *it, selectedItems()) it->update();
+    for (QGraphicsItem *it : selectedItems()) it->update();
     if (!capture) QGraphicsScene::keyPressEvent(event);
 }
 
@@ -1073,7 +1082,7 @@ void TikzScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
 
     QPointF mousePos = event->scenePos();
 
-    foreach (QGraphicsItem *it, items(mousePos)) {
+    for (QGraphicsItem *it : items(mousePos)) {
         if (EdgeItem *ei = dynamic_cast<EdgeItem*>(it)) {
             if (!ei->edge()->isSelfLoop()) {
                 ChangeEdgeModeCommand *cmd = new ChangeEdgeModeCommand(this, ei->edge());
@@ -1136,7 +1145,7 @@ void TikzScene::setEnabled(bool enabled)
 
 int TikzScene::lineNumberForSelection()
 {
-    foreach (QGraphicsItem *gi, selectedItems()) {
+    for (QGraphicsItem *gi : selectedItems()) {
         if (NodeItem *ni = dynamic_cast<NodeItem*>(gi)) return ni->node()->tikzLine();
         if (EdgeItem *ei = dynamic_cast<EdgeItem*>(gi)) return ei->edge()->tikzLine();
     }
@@ -1221,7 +1230,7 @@ void TikzScene::pasteFromClipboard()
         QPointF shift(tgtRect.right() - srcRect.left(), 0.0);
 
         if (shift.x() > 0) {
-            foreach (Node *n, g->nodes()) {
+            for (Node *n : g->nodes()) {
                 n->setPoint(n->point() + shift);
             }
         }
@@ -1233,18 +1242,18 @@ void TikzScene::pasteFromClipboard()
 
 void TikzScene::selectAllNodes()
 {
-    foreach (NodeItem *ni, _nodeItems.values()) {
+    for (NodeItem *ni : _nodeItems.values()) {
         ni->setSelected(true);
     }
 }
 
 void TikzScene::deselectAll()
 {
-    foreach (NodeItem *ni, _nodeItems.values()) {
+    for (NodeItem *ni : _nodeItems.values()) {
         ni->setSelected(false);
     }
 
-    foreach (EdgeItem *ei, _edgeItems.values()) {
+    for (EdgeItem *ei : _edgeItems.values()) {
         ei->setSelected(false);
     }
 }
@@ -1279,7 +1288,7 @@ void TikzScene::rotateNodes(bool clockwise)
 
 void TikzScene::getSelection(QSet<Node *> &selNodes, QSet<Edge *> &selEdges) const
 {
-    foreach (QGraphicsItem *gi, selectedItems()) {
+    for (QGraphicsItem *gi : selectedItems()) {
         if (NodeItem *ni = dynamic_cast<NodeItem*>(gi)) selNodes << ni->node();
         if (EdgeItem *ei = dynamic_cast<EdgeItem*>(gi)) selEdges << ei->edge();
     }
@@ -1288,7 +1297,7 @@ void TikzScene::getSelection(QSet<Node *> &selNodes, QSet<Edge *> &selEdges) con
 QSet<Node *> TikzScene::getSelectedNodes() const
 {
     QSet<Node*> selNodes;
-    foreach (QGraphicsItem *gi, selectedItems()) {
+    for (QGraphicsItem *gi : selectedItems()) {
         if (NodeItem *ni = dynamic_cast<NodeItem*>(gi)) selNodes << ni->node();
     }
     return selNodes;
@@ -1309,12 +1318,12 @@ void TikzScene::setTikzDocument(TikzDocument *tikzDocument)
 void TikzScene::reloadStyles()
 {
     _styles->reloadStyles();
-	foreach(EdgeItem *ei, _edgeItems) {
+	for(EdgeItem *ei : _edgeItems) {
 		ei->edge()->attachStyle();
 		ei->readPos(); // trigger a repaint
 	}
 
-    foreach (NodeItem *ni, _nodeItems) {
+    for (NodeItem *ni : _nodeItems) {
         ni->node()->attachStyle();
         ni->readPos(); // trigger a repaint
     }
@@ -1324,7 +1333,7 @@ void TikzScene::refreshSceneBounds() {
     qreal maxX = 30.0, maxY = 30.0;
     qreal increment = 20.0;
 
-    foreach (Node *n, graph()->nodes()) {
+    for (Node *n : graph()->nodes()) {
         while (n->point().x() - increment < -maxX || n->point().x() + increment > maxX) {
             maxX += increment;
         }
@@ -1367,7 +1376,7 @@ void TikzScene::refreshAdjacentEdges(QList<Node*> nodes)
     if (nodes.empty()) return;
 
     QSet<Path*> paths;
-    foreach (Edge *e, _edgeItems.keys()) {
+    for (Edge *e : _edgeItems.keys()) {
 		EdgeItem *ei = _edgeItems[e];
 
 		// the list "nodes" can be out of date, e.g. if the graph changes while dragging

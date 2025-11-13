@@ -89,7 +89,7 @@ int Graph::maxIntName()
     int max = -1;
     int i;
     bool ok;
-    foreach (Node *n, _nodes) {
+    for (Node *n : _nodes) {
         i = n->name().toInt(&ok);
         if (ok && i > max) max = i;
     }
@@ -110,7 +110,7 @@ QRectF Graph::realBbox()
 {
     //float maxX = 0.0f;
     QRectF rect = bbox();
-    foreach (Node *n, _nodes) {
+    for (Node *n : _nodes) {
         rect = rect.united(QRectF(n->point().x()-0.5f,
                                   n->point().y()-0.5f,
                                   1.0f, 1.0f));
@@ -124,7 +124,7 @@ QRectF Graph::boundsForNodes(QSet<Node*>nds) {
 	QPointF tl;
 	QPointF br;
 	bool hasPoints = false;
-	foreach (Node *n, nds) {
+    for (Node *n : nds) {
 		p = n->point();
 		if (!hasPoints) {
 			hasPoints = true;
@@ -150,7 +150,7 @@ QString Graph::freshNodeName()
 void Graph::renameApart(Graph *graph)
 {
     int i = graph->maxIntName() + 1;
-    foreach (Node *n, _nodes) {
+    for (Node *n : _nodes) {
         n->setName(QString::number(i));
         i++;
     }
@@ -218,8 +218,7 @@ QString Graph::tikz()
         line++;
     }
 
-    Node *n;
-    foreach (n, _nodes) {
+    for (Node *n : _nodes) {
         n->setTikzLine(line);
         code << "\t\t\\node ";
 
@@ -245,9 +244,8 @@ QString Graph::tikz()
     }
 
 
-    Edge *e;
     Path *p;
-    foreach (e, _edges) {
+    for (Edge *e : _edges) {
         p = e->path();
         if (p) { // if edge is part of a path
             if (p->edges().first() == e) { // only add tikz code once per path
@@ -268,7 +266,7 @@ QString Graph::tikz()
                 }
                 code << ")";
 
-                foreach (Edge *e1, p->edges()) {
+                for (Edge *e1 : p->edges()) {
                     code << "\n\t\t\t to ";
                     line++;
                     e1->setTikzLine(line);
@@ -353,7 +351,7 @@ Graph *Graph::copyOfSubgraphWithNodes(QSet<Node *> nds)
     g->setData(_data->copy());
     g->data()->setAtom("tikzfig");
     QMap<Node*,Node*> nodeTable;
-    foreach (Node *n, nodes()) {
+    for (Node *n : nodes()) {
         if (nds.contains(n)) {
             Node *n1 = n->copy();
             nodeTable.insert(n, n1);
@@ -362,7 +360,7 @@ Graph *Graph::copyOfSubgraphWithNodes(QSet<Node *> nds)
     }
 
     QMap<Edge*,Edge*> edgeTable;
-    foreach (Edge *e, edges()) {
+    for (Edge *e : edges()) {
         if (nds.contains(e->source()) && nds.contains(e->target())) {
             Edge *e1 = e->copy(&nodeTable);
             g->addEdge(e1);
@@ -371,10 +369,10 @@ Graph *Graph::copyOfSubgraphWithNodes(QSet<Node *> nds)
     }
 
     // add a copy of a path to the new graph if all of the edges are there
-    foreach (Path *p, paths()) {
+    for (Path *p : paths()) {
         bool allEdges = true;
         Path *p1 = new Path();
-        foreach (Edge *e1, p->edges()) {
+        for (Edge *e1 : p->edges()) {
             if (edgeTable.contains(e1)) {
                 p1->addEdge(edgeTable[e1]);
             } else {
@@ -396,8 +394,8 @@ Graph *Graph::copyOfSubgraphWithNodes(QSet<Node *> nds)
 void Graph::insertGraph(Graph *graph)
 {
     QMap<Node*,Node*> nodeTable;
-    foreach (Node *n, graph->nodes()) addNode(n);
-    foreach (Edge *e, graph->edges()) addEdge(e);
+    for (Node *n : graph->nodes()) addNode(n);
+    for (Edge *e : graph->edges()) addEdge(e);
 }
 
 void Graph::reflectNodes(QSet<Node*> nds, bool horizontal)
@@ -408,14 +406,14 @@ void Graph::reflectNodes(QSet<Node*> nds, bool horizontal)
     else ctr = bds.center().y();
 
     QPointF p;
-    foreach(Node *n, nds) {
+    for(Node *n : nds) {
         p = n->point();
         if (horizontal) p.setX(2 * ctr - p.x());
         else p.setY(2 * ctr - p.y());
         n->setPoint(p);
     }
 
-    foreach (Edge *e, _edges) {
+    for (Edge *e : _edges) {
         if (nds.contains(e->source()) && nds.contains(e->target())) {
             if (!e->basicBendMode()) {
                 if (horizontal) {
@@ -447,7 +445,7 @@ void Graph::rotateNodes(QSet<Node*> nds, bool clockwise)
 
     QPointF p;
     // float dx, dy;
-    foreach(Node *n, nds) {
+    for(Node *n : nds) {
         p = n->point();
         // dx = p.x() - ctr.x();
         // dy = p.y() - ctr.y();
@@ -455,7 +453,7 @@ void Graph::rotateNodes(QSet<Node*> nds, bool clockwise)
     }
 
     int newIn, newOut;
-    foreach (Edge *e, _edges) {
+    for (Edge *e : _edges) {
         if (nds.contains(e->source()) && nds.contains(e->target())) {
             // update angles if necessary. Note that "basic" bends are computed based
             // on node position, so they don't need to be updated.

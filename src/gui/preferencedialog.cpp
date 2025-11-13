@@ -122,8 +122,6 @@ void PreferenceDialog::on_browsePdflatex_clicked()
         dialog.selectFile(fi.baseName());
     }
 
-    dialog.setOption(QFileDialog::DontUseNativeDialog);
-
     if (dialog.exec()) {
         ui->pdflatexPath->setText(QDir::toNativeSeparators(dialog.selectedFiles()[0]));
     }

@@ -211,7 +211,6 @@ bool TikzDocument::saveAs() {
     dialog.setNameFilter(tr("TiKZ Files (*.tikz)"));
     dialog.setFileMode(QFileDialog::AnyFile);
     dialog.setDirectory(settings.value("previous-file-path").toString());
-    dialog.setOption(QFileDialog::DontUseNativeDialog);
 
     if (dialog.exec() && !dialog.selectedFiles().isEmpty()) {
         QString fileName = dialog.selectedFiles()[0];

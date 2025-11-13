@@ -167,8 +167,6 @@ void ExportDialog::on_browseButton_clicked()
         dialog.selectFile(fi.baseName());
     }
 
-    dialog.setOption(QFileDialog::DontUseNativeDialog);
-
     if (dialog.exec()) {
         ui->filePath->setText(QDir::toNativeSeparators(dialog.selectedFiles()[0]));
     }

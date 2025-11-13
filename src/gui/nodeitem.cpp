@@ -71,7 +71,10 @@ void NodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidge
 {
     if (_node->style()->isNone()) {
         QColor c(180,180,200);
-        painter->setPen(QPen(c));
+        QPen dotPen(c);
+        dotPen.setCosmetic(true);
+        dotPen.setWidth(1);
+        painter->setPen(dotPen);
         painter->setBrush(QBrush(c));
         painter->drawEllipse(QPointF(0,0), 1,1);
 
@@ -79,13 +82,15 @@ void NodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidge
         QVector<qreal> p;
         p << 1.0 << 2.0;
         pen.setDashPattern(p);
-		pen.setWidthF(2.0);
+        pen.setWidthF(2.0 * 2.5);
+        pen.setCosmetic(true);
         painter->setPen(pen);
         painter->setBrush(Qt::NoBrush);
         painter->drawPath(shape());
     } else {
-        QPen pen(_node->style()->strokeColor());
-        pen.setWidth(_node->style()->strokeThickness());
+        QPen pen = _node->style()->pen();
+        pen.setWidthF(pen.widthF() * 2.5);
+        pen.setCosmetic(true);
         painter->setPen(pen);
         painter->setBrush(QBrush(_node->style()->fillColor()));
         painter->drawPath(shape());
@@ -132,12 +137,21 @@ void NodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidge
 
     if (isSelected()) {
         QPainterPath sh = shape();
-        QPainterPathStroker stroker;
-        stroker.setWidth(4);
-        QPainterPath outline = (stroker.createStroke(sh) + sh).simplified();
+        
+        QPen selectionPen(QColor(150,200,255));
+        selectionPen.setWidth(8);
+        selectionPen.setCosmetic(true);
+        QVector<qreal> dashPattern;
+        dashPattern << 2.0 << 2.0;
+        selectionPen.setDashPattern(dashPattern);
+        
+        painter->setPen(selectionPen);
+        painter->setBrush(Qt::NoBrush);
+        painter->drawPath(sh);
+        
         painter->setPen(Qt::NoPen);
-        painter->setBrush(QBrush(QColor(150,200,255,100)));
-        painter->drawPath(outline);
+        painter->setBrush(QBrush(QColor(150,200,255,30)));
+        painter->drawPath(sh);
     }
 
 }

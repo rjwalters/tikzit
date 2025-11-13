@@ -69,6 +69,8 @@ void EdgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidge
 {
     //QGraphicsPathItem::paint(painter, option, widget);
 	QPen pen = _edge->style()->pen();
+	pen.setCosmetic(true);
+    pen.setWidthF(pen.widthF() * 2.5); // default zoom 2.5
 	painter->setPen(pen);
     painter->setBrush(Qt::NoBrush);
 
@@ -150,13 +152,19 @@ void EdgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidge
             fill = QColor(200,255,200,150);
         }
 
-        painter->setPen(QPen(draw1));
+        QPen cosmetic1(draw1);
+        cosmetic1.setCosmetic(true);
+        cosmetic1.setWidth(1);
+        painter->setPen(cosmetic1);
 
-        qreal r = GLOBAL_SCALEF * _edge->cpDist();
+        qreal r = 12;
         painter->drawEllipse(toScreen(_edge->source()->point()), r, r);
         painter->drawEllipse(toScreen(_edge->target()->point()), r, r);
 
-        painter->setPen(QPen(draw));
+        QPen cosmetic2(draw);
+        cosmetic2.setCosmetic(true);
+        cosmetic2.setWidth(2);
+        painter->setPen(cosmetic2);
         painter->setBrush(QBrush(fill));
 
         painter->drawLine(toScreen(_edge->tail()), toScreen(_edge->cp1()));
@@ -183,16 +191,22 @@ void EdgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidge
         //painter->drawEllipse(toScreen(_edge->cp1()), r, r);
         //painter->drawEllipse(toScreen(_edge->cp2()), r, r);
 
-        _cp1Item->setPen(QPen(draw));
+        QPen cpPen(draw);
+        cpPen.setCosmetic(true);
+        cpPen.setWidth(5);  // Adjusted for default zoom appearance
+        _cp1Item->setPen(cpPen);
         _cp1Item->setBrush(QBrush(fill));
         _cp1Item->setVisible(true);
 
-        _cp2Item->setPen(QPen(draw));
+        _cp2Item->setPen(cpPen);
         _cp2Item->setBrush(QBrush(fill));
         _cp2Item->setVisible(true);
 
-        r = GLOBAL_SCALEF * 0.05;
-        painter->setPen(QPen(Qt::black));
+        r = 8; // Fixed radius in screen pixels, adjusted for default zoom appearance
+        QPen midpointPen(Qt::black);
+        midpointPen.setCosmetic(true);
+        midpointPen.setWidth(2);
+        painter->setPen(midpointPen);
         painter->setBrush(QBrush(QColor(255,255,255,200)));
         painter->drawEllipse(toScreen(_edge->mid()), r, r);
     } else {

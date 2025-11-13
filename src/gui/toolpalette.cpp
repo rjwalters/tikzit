@@ -26,14 +26,19 @@
 ToolPalette::ToolPalette(QWidget *parent) :
     QToolBar(parent)
 {
-    setWindowFlags(Qt::Window
-                   | Qt::CustomizeWindowHint
-                   | Qt::WindowDoesNotAcceptFocus);
     setOrientation(Qt::Vertical);
     setFocusPolicy(Qt::NoFocus);
     setWindowTitle("Tools");
     setObjectName("toolPalette");
-    //setGeometry(100,200,30,195);
+
+    setIconSize(QSize(24, 24));
+    setToolButtonStyle(Qt::ToolButtonIconOnly);
+    
+    setContentsMargins(2, 2, 2, 2);
+    setStyleSheet("QToolBar { "
+                  "background: palette(window); "
+                  "border: none; "
+                  "}");
 
     tools  = new QActionGroup(this);
 

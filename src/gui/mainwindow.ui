@@ -26,7 +26,7 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout">
+   <layout class="QHBoxLayout" name="horizontalLayout">
     <property name="leftMargin">
      <number>0</number>
     </property>
@@ -39,6 +39,19 @@
     <property name="bottomMargin">
      <number>0</number>
     </property>
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QWidget" name="toolbarContainer">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
+    </item>
     <item>
      <widget class="QSplitter" name="splitter">
       <property name="orientation">

@@ -16,6 +16,7 @@
 #include <QTextBlock>
 #include <QIcon>
 #include <QPushButton>
+#include <QVBoxLayout>
 
 int MainWindow::_numWindows = 0;
 
@@ -33,8 +34,14 @@ MainWindow::MainWindow(QWidget *parent) :
     setAttribute(Qt::WA_DeleteOnClose, true);
     _tikzDocument = new TikzDocument(this);
 
-    _toolPalette = new ToolPalette(this);
-    addToolBar(_toolPalette);
+    _toolPalette = new ToolPalette(ui->toolbarContainer);
+    
+    // Create a vertical layout for the toolbar container
+    QVBoxLayout *toolbarLayout = new QVBoxLayout(ui->toolbarContainer);
+    toolbarLayout->setContentsMargins(2, 2, 2, 2);
+    toolbarLayout->addWidget(_toolPalette);
+    toolbarLayout->addStretch();
+    
     _toolPalette->setMovable(false);
     
     _stylePalette = new StylePalette(this);

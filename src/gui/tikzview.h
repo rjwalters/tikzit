@@ -32,6 +32,8 @@
 #include <QStyleOptionGraphicsItem>
 #include <QRectF>
 #include <QMouseEvent>
+#include <QGestureEvent>
+#include <QPinchGesture>
 
 class TikzView : public QGraphicsView
 {
@@ -46,6 +48,7 @@ public slots:
 protected:
     void drawBackground(QPainter *painter, const QRectF &rect) override;
     void wheelEvent(QWheelEvent *event) override;
+    bool event(QEvent *event) override;
 private:
     float _scale;
 };

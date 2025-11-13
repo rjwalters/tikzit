@@ -22,6 +22,8 @@
 #include <QDebug>
 #include <QScrollBar>
 #include <QSettings>
+#include <QGestureEvent>
+#include <QPinchGesture>
 
 TikzView::TikzView(QWidget *parent) : QGraphicsView(parent)
 {
@@ -33,6 +35,9 @@ TikzView::TikzView(QWidget *parent) : QGraphicsView(parent)
 
     _scale = 2.5f;
     scale(2.5, 2.5);
+    
+    // Enable pinch gesture recognition for Mac trackpad
+    grabGesture(Qt::PinchGesture);
 }
 
 void TikzView::zoomIn()
@@ -153,5 +158,39 @@ void TikzView::wheelEvent(QWheelEvent *event)
     } else if (event->modifiers() & Qt::ShiftModifier) {
         horizontalScrollBar()->setValue(horizontalScrollBar()->value() - event->angleDelta().y());
     }
+}
+
+bool TikzView::event(QEvent *event)
+{
+    if (event->type() == QEvent::Gesture) {
+        QGestureEvent *gestureEvent = static_cast<QGestureEvent*>(event);
+        if (QGesture *pinch = gestureEvent->gesture(Qt::PinchGesture)) {
+            QPinchGesture *pinchGesture = static_cast<QPinchGesture*>(pinch);
+            
+            if (pinchGesture->state() == Qt::GestureStarted) {
+                // Set the view's transformation anchor to the gesture center point
+                setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+            } else if (pinchGesture->state() == Qt::GestureUpdated) {
+                // Calculate zoom factor from pinch scale factor
+                qreal scaleFactor = pinchGesture->scaleFactor();
+                
+                // Apply limits to prevent extreme zooming
+                qreal newScale = _scale * scaleFactor;
+                if (newScale < 0.1f) scaleFactor = 0.1f / _scale;
+                if (newScale > 50.0f) scaleFactor = 50.0f / _scale;
+                
+                // Apply the scaling transformation
+                scale(scaleFactor, scaleFactor);
+                _scale *= scaleFactor;
+            } else if (pinchGesture->state() == Qt::GestureFinished) {
+                // Restore the default transformation anchor
+                setTransformationAnchor(QGraphicsView::AnchorViewCenter);
+            }
+            
+            return true;
+        }
+    }
+    
+    return QGraphicsView::event(event);
 }
 

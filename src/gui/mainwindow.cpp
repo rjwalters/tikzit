@@ -35,7 +35,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     _toolPalette = new ToolPalette(this);
     addToolBar(_toolPalette);
-
+    _toolPalette->setMovable(false);
+    
     _stylePalette = new StylePalette(this);
 
     _tikzScene = new TikzScene(_tikzDocument, _toolPalette, _stylePalette, this);

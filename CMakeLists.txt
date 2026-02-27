@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(tikzit LANGUAGES CXX)
+project(tikzit LANGUAGES CXX VERSION 2.2)
+
+set(TIKZIT_VERSION "${PROJECT_VERSION}")
 
 if (NOT QT_VER)
     set (QT_VER "Qt6")
@@ -135,14 +137,34 @@ endif()
 
 
 
+# macOS app bundle resources
+if(APPLE)
+    set(MACOSX_ICON "${CMAKE_CURRENT_SOURCE_DIR}/images/tikzit.icns")
+    set_source_files_properties(${MACOSX_ICON} PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources")
+endif()
+
 add_executable(tikzit
     ${SOURCES}
     ${HEADERS}
     ${FORM_HEADERS}
     ${FLEX_LEXER_OUTPUTS}
     ${BISON_PARSER_OUTPUTS}
-    ${QT_RESOURCES})
+    ${QT_RESOURCES}
+    $<$<PLATFORM_ID:Darwin>:${MACOSX_ICON}>)
 
+# macOS app bundle configuration
+if(APPLE)
+    set_target_properties(tikzit PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_BUNDLE_NAME "TikZiT"
+        MACOSX_BUNDLE_BUNDLE_VERSION "${TIKZIT_VERSION}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${TIKZIT_VERSION}"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "io.github.tikzit"
+        MACOSX_BUNDLE_ICON_FILE "tikzit.icns"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist"
+    )
+endif()
 
 target_link_libraries(${PROJECT_NAME}
     "${QT_VER}::Core"
@@ -151,7 +173,24 @@ target_link_libraries(${PROJECT_NAME}
     "${QT_VER}::Network"
     "${QT_VER}::Pdf")
 
-install (TARGETS tikzit DESTINATION bin)
+# Install
+if(APPLE)
+    install(TARGETS tikzit BUNDLE DESTINATION ".")
+
+    # macdeployqt target: bundles Qt frameworks into the .app for redistribution
+    find_program(MACDEPLOYQT macdeployqt HINTS "${${QT_VER}_DIR}/../../../bin")
+    if(MACDEPLOYQT)
+        add_custom_target(bundle
+            COMMAND "${MACDEPLOYQT}" "$<TARGET_BUNDLE_DIR:tikzit>"
+            COMMENT "Running macdeployqt on tikzit.app..."
+            DEPENDS tikzit
+        )
+    else()
+        message(STATUS "macdeployqt not found — 'bundle' target will not be available")
+    endif()
+else()
+    install(TARGETS tikzit DESTINATION bin)
+endif()
 
 
 # Tests

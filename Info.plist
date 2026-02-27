@@ -19,8 +19,8 @@
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
 	<key>CFBundleVersion</key>
-	<string>@FULL_VERSION@</string>
+	<string>@MACOSX_BUNDLE_BUNDLE_VERSION@</string>
 	<key>CFBundleShortVersionString</key>
-	<string>@FULL_VERSION@</string>
+	<string>@MACOSX_BUNDLE_SHORT_VERSION_STRING@</string>
 </dict>
 </plist>

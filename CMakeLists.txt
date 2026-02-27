@@ -26,7 +26,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 #set(CMAKE_AUTOUIC ON)
 
-find_package(${QT_VER} REQUIRED COMPONENTS Core Gui Widgets Network Pdf)
+find_package(${QT_VER} REQUIRED COMPONENTS Core Gui Widgets Pdf)
 find_package(BISON)
 find_package(FLEX)
 
@@ -183,14 +183,30 @@ target_link_libraries(${PROJECT_NAME}
     "${QT_VER}::Core"
     "${QT_VER}::Gui"
     "${QT_VER}::Widgets"
-    "${QT_VER}::Network"
     "${QT_VER}::Pdf")
 
 # Install
 if(APPLE)
     install(TARGETS tikzit BUNDLE DESTINATION ".")
 
-    # macdeployqt target: bundles Qt frameworks into the .app for redistribution
+    # Remove qt.conf that points to bundled plugins (breaks non-bundled installs)
+    # and strip any stale frameworks left by a previous macdeployqt run
+    install(CODE "
+        file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/tikzit.app/Contents/Resources/qt.conf\")
+        file(REMOVE_RECURSE \"\${CMAKE_INSTALL_PREFIX}/tikzit.app/Contents/Frameworks\")
+        file(REMOVE_RECURSE \"\${CMAKE_INSTALL_PREFIX}/tikzit.app/Contents/PlugIns\")
+    ")
+
+    # Ad-hoc codesign the installed bundle so macOS doesn't reject it
+    install(CODE "
+        execute_process(
+            COMMAND codesign --force --deep --sign - \"\${CMAKE_INSTALL_PREFIX}/tikzit.app\"
+        )
+    ")
+
+    # macdeployqt target: bundles Qt frameworks into the .app for redistribution.
+    # Use 'cmake --build . --target bundle' then 'cmake --install' for a
+    # self-contained app that doesn't require Homebrew Qt at runtime.
     find_program(MACDEPLOYQT macdeployqt HINTS "${${QT_VER}_DIR}/../../../bin")
     if(MACDEPLOYQT)
         add_custom_target(bundle
@@ -242,7 +258,6 @@ target_link_libraries(tikzit-tests
     "${QT_VER}::Core"
     "${QT_VER}::Gui"
     "${QT_VER}::Widgets"
-    "${QT_VER}::Network"
     "${QT_VER}::Pdf"
     "${QT_VER}::Test"
 )

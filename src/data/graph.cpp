@@ -401,15 +401,15 @@ void Graph::insertGraph(Graph *graph)
 void Graph::reflectNodes(QSet<Node*> nds, bool horizontal)
 {
     QRectF bds = boundsForNodes(nds);
-    float ctr;
+    qreal ctr;
     if (horizontal) ctr = bds.center().x();
     else ctr = bds.center().y();
 
     QPointF p;
     for(Node *n : nds) {
         p = n->point();
-        if (horizontal) p.setX(2 * ctr - p.x());
-        else p.setY(2 * ctr - p.y());
+        if (horizontal) p.setX(roundToNearest(0.25, 2 * ctr - p.x()));
+        else p.setY(roundToNearest(0.25, 2 * ctr - p.y()));
         n->setPoint(p);
     }
 
@@ -441,7 +441,7 @@ void Graph::rotateNodes(QSet<Node*> nds, bool clockwise)
     // QPointF ctr = bds.center();
     // ctr.setX((float)floor(ctr.x() * 4.0f) / 4.0f);
     // ctr.setY((float)floor(ctr.y() * 4.0f) / 4.0f);
-    float sign = (clockwise) ? 1.0f : -1.0f;
+    qreal sign = (clockwise) ? 1.0 : -1.0;
 
     QPointF p;
     // float dx, dy;
@@ -449,7 +449,8 @@ void Graph::rotateNodes(QSet<Node*> nds, bool clockwise)
         p = n->point();
         // dx = p.x() - ctr.x();
         // dy = p.y() - ctr.y();
-        n->setPoint(QPointF(sign * p.y(), -sign * p.x()));
+        n->setPoint(QPointF(roundToNearest(0.25, sign * p.y()),
+                            roundToNearest(0.25, -sign * p.x())));
     }
 
     int newIn, newOut;

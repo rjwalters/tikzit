@@ -48,10 +48,15 @@ public slots:
 protected:
     void drawBackground(QPainter *painter, const QRectF &rect) override;
     void wheelEvent(QWheelEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
     bool event(QEvent *event) override;
 private:
     float _scale;
     qreal _lastPinchScale;
+    bool _isPanning;
+    QPoint _panStart;
 };
 
 #endif // TIKZVIEW_H

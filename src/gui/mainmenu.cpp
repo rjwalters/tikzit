@@ -372,13 +372,16 @@ void MainMenu::on_actionAbout_triggered()
     QMessageBox::about(this,
                        "TikZiT",
                        "<h2><b>TikZiT</b></h2>"
-                       "<p><i>version " TIKZIT_VERSION "</i></p>"
+                       "<p><i>version " TIKZIT_VERSION " (commit " TIKZIT_GIT_HASH ")</i></p>"
+                       "<p>Fork: <a href=\"https://github.com/rjwalters/tikzit\">"
+                       "github.com/rjwalters/tikzit</a></p>"
                        "<p>TikZiT is a GUI diagram editor for PGF/TikZ. It is licensed under the "
                        "<a href=\"https://www.gnu.org/licenses/gpl-3.0.en.html\">GNU General "
                        "Public License, version 3.0</a>.</p>"
-                       "<p>For more info and updates, visit: "
-                       "<a href=\"https://tikzit.github.io\">tikzit.github.io</a></p>");
+                       "<p>Based on <a href=\"https://tikzit.github.io\">TikZiT</a> "
+                       "by Aleks Kissinger.</p>");
 }
+
 
 void MainMenu::on_actionCheck_for_updates_automatically_triggered()
 {

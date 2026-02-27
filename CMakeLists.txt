@@ -4,6 +4,19 @@ project(tikzit LANGUAGES CXX VERSION 2.2)
 
 set(TIKZIT_VERSION "${PROJECT_VERSION}")
 
+# Get git commit hash for the about dialog
+execute_process(
+    COMMAND git rev-parse --short HEAD
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    OUTPUT_VARIABLE GIT_COMMIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+)
+if(NOT GIT_COMMIT_HASH)
+    set(GIT_COMMIT_HASH "unknown")
+endif()
+add_compile_definitions(TIKZIT_GIT_HASH="${GIT_COMMIT_HASH}")
+
 if (NOT QT_VER)
     set (QT_VER "Qt6")
 endif()

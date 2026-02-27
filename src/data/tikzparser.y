@@ -137,7 +137,7 @@ tikzstyles: tikzstyles tikzstyle | ;
 tikzstyle: "\\tikzstyle" DELIMITEDSTRING "=" "[" properties "]"
     {
         if (assembler->isTikzStyles()) {
-            assembler->tikzStyles()->addStyle(QString($2), $5);
+            assembler->tikzStyles()->addStyle(QString::fromUtf8($2), $5);
         }
     }
 
@@ -175,14 +175,14 @@ extraproperties:
 property:
 	val "=" val
     {
-        GraphElementProperty *p = new GraphElementProperty(QString($1),QString($3));
+        GraphElementProperty *p = new GraphElementProperty(QString::fromUtf8($1),QString::fromUtf8($3));
         free($1);
         free($3);
         $$ = p;
     }
 	| val
     {
-        GraphElementProperty *a = new GraphElementProperty(QString($1));
+        GraphElementProperty *a = new GraphElementProperty(QString::fromUtf8($1));
         free($1);
         $$ = a;
     };
@@ -197,8 +197,8 @@ node: "\\node" optproperties nodename "at" TCOORD DELIMITEDSTRING ";"
             node->setData($2);
         }
         //qDebug() << "node name: " << $3;
-        node->setName(QString($3));
-        node->setLabel(QString($6));
+        node->setName(QString::fromUtf8($3));
+        node->setLabel(QString::fromUtf8($6));
         free($3);
         free($6);
 
@@ -212,7 +212,7 @@ node: "\\node" optproperties nodename "at" TCOORD DELIMITEDSTRING ";"
 optanchor:  { $$ = 0; } | "." REFSTRING { $$ = $2; };
 noderef: "(" REFSTRING optanchor ")"
 	{
-        $$.node = assembler->nodeWithName(QString($2));
+        $$.node = assembler->nodeWithName(QString::fromUtf8($2));
         free($2);
         $$.anchor = $3;
         $$.loop = false;
@@ -229,14 +229,14 @@ optedgenode:
         $$ = new Node();
         if ($2)
             $$->setData($2);
-        $$->setLabel(QString($3));
+        $$->setLabel(QString::fromUtf8($3));
         free($3);
 	}
 
 edgesource: optproperties noderef {
         assembler->setCurrentEdgeSource($2.node);
         if ($2.anchor) {
-            assembler->setCurrentEdgeSourceAnchor(QString($2.anchor));
+            assembler->setCurrentEdgeSourceAnchor(QString::fromUtf8($2.anchor));
             free($2.anchor);
         } else {
             assembler->setCurrentEdgeSourceAnchor(QString());
@@ -268,7 +268,7 @@ edgetarget: "to" optproperties optedgenode optnoderef {
             }
 
             if ($4.anchor) {
-                QString a($4.anchor);
+                QString a(QString::fromUtf8($4.anchor));
                 free($4.anchor);
                 e->setTargetAnchor(a);
                 assembler->setCurrentEdgeSourceAnchor(a);

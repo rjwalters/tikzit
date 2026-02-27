@@ -160,4 +160,33 @@ void TestParser::parseBbox()
     delete g;
 }
 
+void TestParser::parseNonAsciiLabel()
+{
+    // Test Chinese characters
+    Graph *g1 = new Graph();
+    TikzAssembler ga1(g1);
+    bool res1 = ga1.parse(
+    "\\begin{tikzpicture}\n"
+    "  \\node (n) at (0, 0) {" "\xe4\xbd\xa0\xe5\xa5\xbd" "};\n"
+    "\\end{tikzpicture}");
+    QVERIFY(res1);
+    QVERIFY(g1->nodes().size() == 1);
+    QVERIFY(g1->nodes()[0]->label() == QString::fromUtf8("\xe4\xbd\xa0\xe5\xa5\xbd"));
+    // Verify roundtrip: tikz output should contain the UTF-8 label
+    QVERIFY(g1->tikz().contains(QString::fromUtf8("\xe4\xbd\xa0\xe5\xa5\xbd")));
+    delete g1;
+
+    // Test accented Latin characters
+    Graph *g2 = new Graph();
+    TikzAssembler ga2(g2);
+    bool res2 = ga2.parse(
+    "\\begin{tikzpicture}\n"
+    "  \\node (n) at (0, 0) {na" "\xc3\xaf" "ve};\n"
+    "\\end{tikzpicture}");
+    QVERIFY(res2);
+    QVERIFY(g2->nodes().size() == 1);
+    QVERIFY(g2->nodes()[0]->label() == QString::fromUtf8("na\xc3\xafve"));
+    delete g2;
+}
+
 

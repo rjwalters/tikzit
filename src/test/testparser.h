@@ -13,6 +13,7 @@ private slots:
     void parseEdgeNode();
     void parseEdgeBends();
     void parseBbox();
+    void parseNonAsciiLabel();
 };
 
 #endif // TESTPARSER_H

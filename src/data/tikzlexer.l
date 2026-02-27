@@ -71,6 +71,7 @@ FLOAT \-?[0-9]*(\.[0-9]+)?
 \\begin\{tikzpicture\}         {  return BEGIN_TIKZPICTURE_CMD; }
 \\end\{tikzpicture\}           {  return END_TIKZPICTURE_CMD; }
 \\tikzstyle                    {  return TIKZSTYLE_CMD; }
+\\tikzset                      {  return TIKZSET_CMD; }
 \\begin\{pgfonlayer\}          {  return BEGIN_PGFONLAYER_CMD; }
 \\end\{pgfonlayer\}            {  return END_PGFONLAYER_CMD; }
 \\draw                         {  return DRAW_CMD; }

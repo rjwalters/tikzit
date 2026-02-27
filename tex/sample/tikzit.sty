@@ -4,7 +4,7 @@
 \usetikzlibrary{shapes,shapes.geometric,shapes.misc}
 
 % this style is applied by default to any tikzpicture included via \tikzfig
-\tikzstyle{tikzfig}=[baseline=-0.25em,scale=0.5]
+\tikzset{tikzfig/.style={baseline=-0.25em,scale=0.5}}
 
 % these are dummy properties used by TikZiT, but ignored by LaTex
 \pgfkeys{/tikz/tikzit fill/.initial=0}
@@ -18,11 +18,11 @@
 \pgfsetlayers{background,edgelayer,nodelayer,main}
 
 % style for blank nodes
-\tikzstyle{none}=[inner sep=0mm]
+\tikzset{none/.style={inner sep=0mm}}
 
 % include a .tikz file
 \newcommand{\tikzfig}[1]{%
-{\tikzstyle{every picture}=[tikzfig]
+{\tikzset{every picture/.style={tikzfig}}
 \IfFileExists{#1.tikz}
   {\input{#1.tikz}}
   {%
@@ -39,4 +39,4 @@
 \end{center}}
 
 % fix strange self-loops, which are PGF/TikZ default
-\tikzstyle{every loop}=[]
+\tikzset{every loop/.style={}}

@@ -75,6 +75,7 @@ public:
     void add(GraphElementProperty p);
 
     QString tikz();
+    QString tikzSet();
     bool isEmpty();
     QVector<GraphElementProperty> properties() const;
 

@@ -254,6 +254,25 @@ QString GraphElementData::tikz() {
     return str;
 }
 
+QString GraphElementData::tikzSet() {
+    if (_properties.length() == 0) return "";
+    QString str;
+    QTextStream code(&str);
+    code << "{";
+
+    bool first = true;
+    for(GraphElementProperty p : _properties) {
+        if (!first) code << ", ";
+        code << p.tikz();
+        first = false;
+    }
+
+    code << "}";
+
+    code.flush();
+    return str;
+}
+
 bool GraphElementData::isEmpty()
 {
     return _properties.isEmpty();

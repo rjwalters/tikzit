@@ -87,6 +87,7 @@ void yyerror(YYLTYPE *yylloc, void * /*scanner*/, const char *str) {
 %token BEGIN_TIKZPICTURE_CMD "\\begin{tikzpicture}"
 %token END_TIKZPICTURE_CMD "\\end{tikzpicture}"
 %token TIKZSTYLE_CMD "\\tikzstyle"
+%token TIKZSET_CMD "\\tikzset"
 %token BEGIN_PGFONLAYER_CMD "\\begin{pgfonlayer}"
 %token END_PGFONLAYER_CMD "\\end{pgfonlayer}"
 %token DRAW_CMD "\\draw"
@@ -134,10 +135,60 @@ void yyerror(YYLTYPE *yylloc, void * /*scanner*/, const char *str) {
 tikz: tikzstyles | tikzpicture;
 
 tikzstyles: tikzstyles tikzstyle | ;
-tikzstyle: "\\tikzstyle" DELIMITEDSTRING "=" "[" properties "]"
+tikzstyle:
+    "\\tikzstyle" DELIMITEDSTRING "=" "[" properties "]"
     {
         if (assembler->isTikzStyles()) {
             assembler->tikzStyles()->addStyle(QString($2), $5);
+        }
+    }
+    | "\\tikzset" DELIMITEDSTRING
+    {
+        if (assembler->isTikzStyles()) {
+            QString content($2);
+            free($2);
+
+            // Parse "NAME/.style={PROPS}" from the delimited string content
+            int styleIdx = content.indexOf("/.style=");
+            if (styleIdx != -1) {
+                QString name = content.left(styleIdx).trimmed();
+                QString propsStr = content.mid(styleIdx + 8).trimmed(); // skip "/.style="
+
+                // Strip outer braces from property list if present: {PROPS} -> PROPS
+                if (propsStr.startsWith("{") && propsStr.endsWith("}")) {
+                    propsStr = propsStr.mid(1, propsStr.length() - 2);
+                }
+
+                // Parse properties from comma-separated list, handling nested braces
+                GraphElementData *data = new GraphElementData();
+                int depth = 0;
+                int start = 0;
+                for (int i = 0; i <= propsStr.length(); ++i) {
+                    QChar c = (i < propsStr.length()) ? propsStr[i] : QChar(',');
+                    if (c == '{') { depth++; }
+                    else if (c == '}') { depth--; }
+                    else if ((c == ',' && depth == 0) || i == propsStr.length()) {
+                        QString token = propsStr.mid(start, i - start).trimmed();
+                        if (!token.isEmpty()) {
+                            int eqIdx = token.indexOf('=');
+                            if (eqIdx != -1) {
+                                QString key = token.left(eqIdx).trimmed();
+                                QString val = token.mid(eqIdx + 1).trimmed();
+                                // Strip braces from value if present
+                                if (val.startsWith("{") && val.endsWith("}")) {
+                                    val = val.mid(1, val.length() - 2);
+                                }
+                                data->add(GraphElementProperty(key, val));
+                            } else {
+                                data->add(GraphElementProperty(token));
+                            }
+                        }
+                        start = i + 1;
+                    }
+                }
+
+                assembler->tikzStyles()->addStyle(name, data);
+            }
         }
     }
 

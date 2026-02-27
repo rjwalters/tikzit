@@ -118,7 +118,7 @@ QString Style::propertyWithDefault(QString prop, QString def, bool tikzitOverrid
 
 QString Style::tikz() const
 {
-    return "\\tikzstyle{" + _name + "}=" + _data->tikz();
+    return "\\tikzset{" + _name + "/.style=" + _data->tikzSet() + "}";
 }
 
 void Style::setArrowAtom(QString atom)

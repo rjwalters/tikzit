@@ -444,6 +444,7 @@ void PasteCommand::redo()
     }
 
     _scene->refreshZIndices();
+    _scene->invalidate();
     GraphUpdateCommand::redo();
 }
 

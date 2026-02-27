@@ -18,10 +18,12 @@ public:
     void setPainterPath(const QPainterPath &painterPath);
 
     QRectF boundingRect() const override;
+    QPainterPath shape() const override;
 
 private:
     Path *_path;
     QPainterPath _painterPath;
+    QPainterPath _shapePath;
     QRectF _boundingRect;
 };
 

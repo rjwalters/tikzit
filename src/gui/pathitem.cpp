@@ -56,6 +56,21 @@ void PathItem::setPainterPath(const QPainterPath &painterPath)
     prepareGeometryChange();
 
     _painterPath = painterPath;
+
+    // Compute shape for hit-testing. For filled paths, include the full
+    // interior so clicks inside the filled region register as hits.
+    // For unfilled paths, use only the stroked outline so clicks in the
+    // interior pass through and allow rubber-band selection.
+    Style *st = _path->edges().first()->style();
+    if (st->hasFill()) {
+        _shapePath = _painterPath;
+    } else {
+        QPainterPathStroker stroker;
+        stroker.setWidth(8);
+        stroker.setJoinStyle(Qt::MiterJoin);
+        _shapePath = stroker.createStroke(_painterPath).simplified();
+    }
+
     float r = GLOBAL_SCALEF * 0.1;
     _boundingRect = _painterPath.boundingRect().adjusted(-r,-r,r,r);
 
@@ -65,4 +80,9 @@ void PathItem::setPainterPath(const QPainterPath &painterPath)
 QRectF PathItem::boundingRect() const
 {
     return _boundingRect;
+}
+
+QPainterPath PathItem::shape() const
+{
+    return _shapePath;
 }

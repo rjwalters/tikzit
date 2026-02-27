@@ -36,6 +36,7 @@ TikzView::TikzView(QWidget *parent) : QGraphicsView(parent)
     _scale = 2.5f;
     scale(2.5, 2.5);
     _lastPinchScale = 1.0;
+    _isPanning = false;
     
     // Enable pinch gesture recognition for Mac trackpad
     grabGesture(Qt::PinchGesture);
@@ -137,6 +138,42 @@ void TikzView::drawBackground(QPainter *painter, const QRectF &rect)
     painter->setPen(pen3);
     painter->drawLine(rect.left(), 0, rect.right(), 0);
     painter->drawLine(0, rect.top(), 0, rect.bottom());
+}
+
+void TikzView::mousePressEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::MiddleButton) {
+        _isPanning = true;
+        _panStart = event->pos();
+        setCursor(Qt::ClosedHandCursor);
+        event->accept();
+        return;
+    }
+    QGraphicsView::mousePressEvent(event);
+}
+
+void TikzView::mouseMoveEvent(QMouseEvent *event)
+{
+    if (_isPanning) {
+        QPoint delta = event->pos() - _panStart;
+        _panStart = event->pos();
+        horizontalScrollBar()->setValue(horizontalScrollBar()->value() - delta.x());
+        verticalScrollBar()->setValue(verticalScrollBar()->value() - delta.y());
+        event->accept();
+        return;
+    }
+    QGraphicsView::mouseMoveEvent(event);
+}
+
+void TikzView::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::MiddleButton) {
+        _isPanning = false;
+        setCursor(Qt::ArrowCursor);
+        event->accept();
+        return;
+    }
+    QGraphicsView::mouseReleaseEvent(event);
 }
 
 void TikzView::wheelEvent(QWheelEvent *event)

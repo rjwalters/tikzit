@@ -63,7 +63,6 @@ MainWindow::MainWindow(QWidget *parent) :
     _tikzDocument->refreshTikz();
 
     connect(_tikzDocument->undoStack(), SIGNAL(cleanChanged(bool)), this, SLOT(updateFileName()));
-    _menu->addDocks(createPopupMenu());
 
     setFont();
 
@@ -74,6 +73,11 @@ MainWindow::MainWindow(QWidget *parent) :
         addDockWidget(Qt::RightDockWidgetArea, _stylePalette);
         resizeDocks({_stylePalette}, {130}, Qt::Horizontal);
     }
+
+    // Add dock toggle actions to the View menu. This must be called after
+    // restoreState/addDockWidget so that createPopupMenu() sees the
+    // registered dock widgets (fixes: style palette cannot be reopened).
+    _menu->addDocks(createPopupMenu());
 }
 
 MainWindow::~MainWindow()

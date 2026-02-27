@@ -26,15 +26,7 @@
 
 MainMenu::MainMenu()
 {
-    QSettings settings("tikzit", "tikzit");
     ui.setupUi(this);
-
-    if (!settings.value("check-for-updates").isNull()) {
-        ui.actionCheck_for_updates_automatically->blockSignals(true);
-        ui.actionCheck_for_updates_automatically->setChecked(settings.value("check-for-updates").toBool());
-        ui.actionCheck_for_updates_automatically->blockSignals(false);
-    }
-
     updateRecentFiles();
 }
 
@@ -44,11 +36,6 @@ void MainMenu::addDocks(QMenu *m)
     for (QAction *a : m->actions()) {
         if (!a->isSeparator()) ui.menuView->addAction(a);
     }
-}
-
-QAction *MainMenu::updatesAction()
-{
-    return ui.actionCheck_for_updates_automatically;
 }
 
 void MainMenu::updateRecentFiles()
@@ -383,12 +370,3 @@ void MainMenu::on_actionAbout_triggered()
 }
 
 
-void MainMenu::on_actionCheck_for_updates_automatically_triggered()
-{
-    tikzit->setCheckForUpdates(ui.actionCheck_for_updates_automatically->isChecked());
-}
-
-void MainMenu::on_actionCheck_now_triggered()
-{
-    tikzit->checkForUpdates(true);
-}

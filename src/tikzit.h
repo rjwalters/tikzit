@@ -71,7 +71,6 @@
 #include <QMainWindow>
 #include <QFont>
 #include <QColor>
-#include <QNetworkReply>
 
 // Number of pixels between (0,0) and (1,0) at 100% zoom level. This should be
 // divisible by 8 to avoid rounding errors with e.g. grid-snapping.
@@ -142,11 +141,6 @@ public:
 
 public slots:
     void clearRecentFiles();
-    void setCheckForUpdates(bool check);
-    void checkForUpdates(bool manual);
-    void updateAuto(QNetworkReply *reply);
-    void updateManual(QNetworkReply *reply);
-    void updateReply(QNetworkReply *reply, bool manual);
     void makePreview();
     void cleanupLatex();
 

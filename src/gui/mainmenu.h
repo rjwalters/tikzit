@@ -29,7 +29,6 @@ class MainMenu : public QMenuBar
 public:
     MainMenu();
     void addDocks(QMenu *m);
-    QAction *updatesAction();
     void updateRecentFiles();
 
 private:
@@ -92,8 +91,6 @@ public slots:
 
     // Help
     void on_actionAbout_triggered();
-    void on_actionCheck_for_updates_automatically_triggered();
-    void on_actionCheck_now_triggered();
 };
 
 #endif // MAINMENU_H

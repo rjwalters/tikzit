@@ -29,8 +29,6 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QRegularExpression>
-#include <QVersionNumber>
-#include <QNetworkAccessManager>
 #include <QColorDialog>
 
 // application-level instance of Tikzit
@@ -69,24 +67,6 @@ void Tikzit::init()
     _styleFilePath = "";
     QString styleFile = settings.value("previous-tikzstyles-file").toString();
     if (!styleFile.isEmpty()) loadStyles(styleFile);
-
-    QVariant check = settings.value("check-for-updates");
-    if (check.isNull()) {
-        int resp = QMessageBox::question(nullptr,
-          tr("Check for updates"),
-          tr("Would you like TikZiT to check for updates automatically?"
-             " (You can always change this later in the Help menu.)"),
-          QMessageBox::Yes | QMessageBox::Default,
-          QMessageBox::No,
-          QMessageBox::NoButton);
-        check.setValue(resp == QMessageBox::Yes);
-    }
-
-    setCheckForUpdates(check.toBool());
-
-    if (check.toBool()) {
-        checkForUpdates(false);
-    }
 
     _preview = new PreviewWindow();
     _latex = nullptr;
@@ -340,90 +320,6 @@ void Tikzit::clearRecentFiles()
     QSettings settings("tikzit", "tikzit");
     settings.setValue("recent-files", QStringList());
     updateRecentFiles();
-}
-
-void Tikzit::setCheckForUpdates(bool check)
-{
-    QSettings settings("tikzit", "tikzit");
-    settings.setValue("check-for-updates", check);
-    foreach (MainWindow *w, _windows) {
-        w->menu()->updatesAction()->blockSignals(true);
-        w->menu()->updatesAction()->setChecked(check);
-        w->menu()->updatesAction()->blockSignals(false);
-    }
-}
-
-void Tikzit::checkForUpdates(bool manual)
-{
-    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-
-    if (manual) {
-        connect(manager, SIGNAL(finished(QNetworkReply*)),
-            this, SLOT(updateManual(QNetworkReply*)));
-    } else {
-        connect(manager, SIGNAL(finished(QNetworkReply*)),
-            this, SLOT(updateAuto(QNetworkReply*)));
-    }
-
-    manager->get(QNetworkRequest(QUrl("https://tikzit.github.io/latest-version.txt")));
-}
-
-void Tikzit::updateAuto(QNetworkReply *reply)
-{
-    updateReply(reply, false);
-}
-
-void Tikzit::updateManual(QNetworkReply *reply)
-{
-    updateReply(reply, true);
-}
-
-void Tikzit::updateReply(QNetworkReply *reply, bool manual)
-{
-    if (!reply->isReadable()) return;
-
-    QByteArray data = reply->read(200);
-    QString strLatest = QString::fromUtf8(data).simplified();
-
-    // check for valid version string and capture optional RC suffix
-    QRegularExpression re("^[1-9]+(\\.[0-9]+)*(-[rR][cC]([0-9]+))?$");
-    QRegularExpressionMatch m;
-    m = re.match(TIKZIT_VERSION);
-
-    // any non-RC versions are considered later than RC versions.
-    int rcCurrent = (!m.captured(3).isEmpty()) ? m.captured(3).toInt() : 1000;
-
-    m = re.match(strLatest);
-
-    if (m.hasMatch()) {
-        QVersionNumber current = QVersionNumber::fromString(TIKZIT_VERSION).normalized();
-        QVersionNumber latest = QVersionNumber::fromString(strLatest).normalized();
-
-        int rcLatest = (!m.captured(3).isEmpty()) ? m.captured(3).toInt() : 1000;
-
-        if (latest > current || (latest == current && rcLatest > rcCurrent)) {
-            // give the version string in standard format
-            strLatest = QString::number(latest.majorVersion()) + "." +
-                QString::number(latest.minorVersion()) + "." +
-                QString::number(latest.microVersion());
-            if (rcLatest != 1000) strLatest += "-rc" + QString::number(rcLatest);
-            QMessageBox::information(nullptr,
-              tr("Update available"),
-              "<p><b>A new version of TikZiT is available!</b></p>"
-              "<p><i>current version: " TIKZIT_VERSION "<br />"
-              "latest version: " + strLatest + "</i></p>"
-              "<p>Download it now from: "
-              "<a href=\"https://tikzit.github.io\">tikzit.github.io</a>.</p>");
-        }
-    } else {
-        // don't complain of invalid response for auto update check
-        if (manual) {
-            QMessageBox::warning(nullptr,
-              tr("Invalid response"),
-              "<p>Got invalid version response from "
-              "<a href=\"https://tikzit.github.io\">tikzit.github.io</a>.</p>");
-        }
-    }
 }
 
 void Tikzit::makePreview()

@@ -3,6 +3,16 @@
 
 TikZiT is a graphical tool for rapidly creating graphs and string diagrams using PGF/TikZ. It was used, for example, to make all of the 2500+ diagrams in <a href="http://cambridge.org/pqp">this book</a>.
 
+This is a fork of TikZiT that adds an **Auto Layout** feature (`Ctrl+L`), which performs Sugiyama-style layered graph placement with bend-assignment edge routing. The layout scoring approach (crossing count, overlap detection, wirelength, area) borrows ideas from EDA place-and-route engines that solve structurally similar problems for PCB/IC layouts.
+
+### Auto Layout
+
+- **Ctrl+L** runs auto layout with saved preferences
+- **Ctrl+Z** fully undoes the layout as a single step
+- Nodes with the `tikzit.locked` property are treated as fixed obstacles
+- Settings (margins, flow direction) are configurable in Preferences
+- Handles disconnected components, edge-free graphs, and self-loops
+
 ## Building on Windows
 
 TiKZiT can be built in Windows using Qt Creator (part of <a href="http://doc.qt.io/qt-5/windows-support.html">Qt for Windows</a>) or from the command line. In either case, it is recommended you compile with <a href="http://www.mingw.org/">mingw32</a>, which is included in the official Qt distribution. There is no reason, in principle, that you couldn't use mingw64 or MSVC, but these haven't been tested.
@@ -68,3 +78,8 @@ On older systems (pre-10.11), you can build with Qt 5.6, which <a href="http://d
     export PATH=/opt/local/libexec/qt5/bin:$PATH
 
 I have only tested this with TikZiT 2.0, so to install LaTeX (required by TikZiT >= 2.1), you are on your own.
+
+
+## Acknowledgments
+
+The auto layout scoring functions in `src/layout/layouteval.cpp` (crossing count via segment intersection, AABB overlap detection, wirelength, area, and weighted scoring) are adapted from evaluation algorithms used in analog/mixed-signal EDA place-and-route engines that solve structurally similar graph layout problems — component overlap avoidance, crossing-free routing, and compact area minimization.

@@ -22,6 +22,9 @@
 #include "tikzparser.parser.hpp"
 #include "tikzlexer.h"
 
+#include <QRegularExpression>
+#include <QSet>
+
 int yyparse(void *scanner);
 
 TikzAssembler::TikzAssembler(Graph *graph, QObject *parent) :
@@ -31,6 +34,7 @@ TikzAssembler::TikzAssembler(Graph *graph, QObject *parent) :
     yyset_extra(this, scanner);
     _currentEdgeData = nullptr;
     _currentPath = nullptr;
+    _syntheticNodeCount = 0;
 }
 
 TikzAssembler::TikzAssembler(TikzStyles *tikzStyles, QObject *parent) :
@@ -40,6 +44,7 @@ TikzAssembler::TikzAssembler(TikzStyles *tikzStyles, QObject *parent) :
     yyset_extra(this, scanner);
     _currentEdgeData = nullptr;
     _currentPath = nullptr;
+    _syntheticNodeCount = 0;
 }
 
 void TikzAssembler::addNodeToMap(Node *n) { _nodeMap.insert(n->name(), n); }
@@ -50,7 +55,10 @@ bool TikzAssembler::parse(const QString &tikz)
     yy_scan_string(tikz.toUtf8().data(), scanner);
     int result = yyparse(scanner);
 
-    if (result == 0) return true;
+    if (result == 0) {
+        if (_graph) resolveRelativePositions();
+        return true;
+    }
     else return false;
 }
 
@@ -139,5 +147,175 @@ void TikzAssembler::finishCurrentPath()
             _currentPath = nullptr;
         }
     }
+}
+
+QPointF TikzAssembler::currentDrawPos() const
+{
+    return _currentDrawPos;
+}
+
+void TikzAssembler::setCurrentDrawPos(const QPointF &pos)
+{
+    _currentDrawPos = pos;
+}
+
+Node *TikzAssembler::createSyntheticNode(QPointF pos)
+{
+    Node *n = new Node();
+    n->setPoint(pos);
+    QString name = QString("__synthetic_%1").arg(_syntheticNodeCount++);
+    n->setName(name);
+    n->setLabel(QString());
+    _graph->addNode(n);
+    addNodeToMap(n);
+    return n;
+}
+
+QPointF TikzAssembler::anchorOffset(Node * /*n*/, const QString &anchor)
+{
+    // Approximate offsets for common anchors (in cm).
+    // TikZiT doesn't know actual node dimensions, so use small fixed offsets.
+    if (anchor == "north") return QPointF(0, 0.2);
+    if (anchor == "south") return QPointF(0, -0.2);
+    if (anchor == "east") return QPointF(0.2, 0);
+    if (anchor == "west") return QPointF(-0.2, 0);
+    if (anchor == "north east") return QPointF(0.15, 0.15);
+    if (anchor == "north west") return QPointF(-0.15, 0.15);
+    if (anchor == "south east") return QPointF(0.15, -0.15);
+    if (anchor == "south west") return QPointF(-0.15, -0.15);
+    if (anchor == "center") return QPointF(0, 0);
+    return QPointF(0, 0);
+}
+
+QPointF TikzAssembler::resolveCoordCalc(const QString &refA, const QString &anchorA,
+                                         const QString &refB, const QString &anchorB, bool hv)
+{
+    Node *a = nodeWithName(refA);
+    Node *b = nodeWithName(refB);
+    QPointF posA = a ? a->point() + anchorOffset(a, anchorA) : QPointF(0, 0);
+    QPointF posB = b ? b->point() + anchorOffset(b, anchorB) : QPointF(0, 0);
+
+    if (hv) {
+        // (a -| b) means x from b, y from a
+        return QPointF(posB.x(), posA.y());
+    } else {
+        // (a |- b) means x from a, y from b
+        return QPointF(posA.x(), posB.y());
+    }
+}
+
+static double parseDimension(const QString &s)
+{
+    // Parse a dimension value, converting to cm.
+    // Supports: plain numbers (assumed cm), Xpt, Xcm, Xmm, Xin, Xem, Xex
+    QString trimmed = s.trimmed();
+    double val = 0;
+    QString unit;
+
+    // Extract numeric prefix and unit suffix
+    int i = 0;
+    // Allow leading minus/plus
+    if (i < trimmed.length() && (trimmed[i] == '-' || trimmed[i] == '+')) i++;
+    while (i < trimmed.length() && (trimmed[i].isDigit() || trimmed[i] == '.')) i++;
+
+    bool ok;
+    val = trimmed.left(i).toDouble(&ok);
+    if (!ok) return 0;
+
+    unit = trimmed.mid(i).trimmed().toLower();
+
+    if (unit.isEmpty() || unit == "cm") return val;
+    if (unit == "pt") return val / 28.45;
+    if (unit == "mm") return val / 10.0;
+    if (unit == "in") return val * 2.54;
+    if (unit == "em") return val * 0.35;  // approximate
+    if (unit == "ex") return val * 0.15;  // approximate
+    return val; // unknown unit, treat as cm
+}
+
+void TikzAssembler::resolveRelativePositions()
+{
+    if (!_graph) return;
+
+    // Resolve nodes that use relative positioning (right=X of Y, etc.)
+    // Use iterative resolution since nodes may depend on other relatively-positioned nodes.
+    QSet<Node*> unresolved;
+
+    for (Node *n : _graph->nodes()) {
+        if (!n->data()) continue;
+
+        // Check if this node has a relative positioning property
+        bool hasRelative = false;
+        QStringList directions = {"right", "left", "above", "below",
+                                  "above right", "above left", "below right", "below left"};
+        for (const QString &dir : directions) {
+            if (n->data()->hasProperty(dir)) {
+                hasRelative = true;
+                break;
+            }
+        }
+        if (hasRelative) {
+            unresolved.insert(n);
+        }
+    }
+
+    // Iteratively resolve (simple topological ordering via iteration)
+    int maxIter = unresolved.size() + 1;
+    while (!unresolved.isEmpty() && maxIter > 0) {
+        maxIter--;
+        QSet<Node*> resolved;
+
+        for (Node *n : unresolved) {
+            QStringList directions = {"right", "left", "above", "below",
+                                      "above right", "above left", "below right", "below left"};
+            for (const QString &dir : directions) {
+                if (!n->data()->hasProperty(dir)) continue;
+
+                QString val = n->data()->property(dir);
+                // Parse "Xpt of Y" or "X of Y" or just "of Y" (default distance)
+                QRegularExpression re("^\\s*(?:([\\d.]+\\s*(?:pt|cm|mm|in|em|ex)?)\\s+)?of\\s+(.+)$");
+                QRegularExpressionMatch m = re.match(val);
+                if (!m.hasMatch()) continue;
+
+                QString distStr = m.captured(1);
+                QString refName = m.captured(2).trimmed();
+                Node *ref = nodeWithName(refName);
+
+                if (!ref) continue;
+                if (unresolved.contains(ref)) continue; // dependency not yet resolved
+
+                double dist = distStr.isEmpty() ? 1.0 : parseDimension(distStr);
+
+                QPointF refPos = ref->point();
+                QPointF offset(0, 0);
+
+                if (dir == "right") offset = QPointF(dist, 0);
+                else if (dir == "left") offset = QPointF(-dist, 0);
+                else if (dir == "above") offset = QPointF(0, dist);
+                else if (dir == "below") offset = QPointF(0, -dist);
+                else if (dir == "above right") offset = QPointF(dist, dist);
+                else if (dir == "above left") offset = QPointF(-dist, dist);
+                else if (dir == "below right") offset = QPointF(dist, -dist);
+                else if (dir == "below left") offset = QPointF(-dist, -dist);
+
+                // Apply xshift/yshift if present
+                if (n->data()->hasProperty("xshift")) {
+                    offset.setX(offset.x() + parseDimension(n->data()->property("xshift")));
+                }
+                if (n->data()->hasProperty("yshift")) {
+                    offset.setY(offset.y() + parseDimension(n->data()->property("yshift")));
+                }
+
+                n->setPoint(refPos + offset);
+                resolved.insert(n);
+                break;
+            }
+        }
+
+        unresolved -= resolved;
+        if (resolved.isEmpty()) break; // no progress, stop
+    }
+
+    // Any remaining unresolved nodes fall back to (0,0) — already their default
 }
 

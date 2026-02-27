@@ -64,6 +64,7 @@
 
 #include "tikzlexer.h"
 #include "tikzassembler.h"
+#include <QRegularExpression>
 /* the assembler (used by this parser) is stored in the lexer
    state as "extra" data */
 #define assembler yyget_extra(scanner)
@@ -98,6 +99,12 @@ void yyerror(YYLTYPE *yylloc, void * /*scanner*/, const char *str) {
 %token AT "at"
 %token TO "to"
 %token CYCLE "cycle"
+%token MINUSMINUS "--"
+%token HV_LINE "-|"
+%token VH_LINE "|-"
+%token PLUSPLUS "++"
+%token BEGIN_SCOPE_CMD "\\begin{scope}"
+%token END_SCOPE_CMD "\\end{scope}"
 %token SEMICOLON ";"
 %token COMMA ","
 
@@ -119,6 +126,7 @@ void yyerror(YYLTYPE *yylloc, void * /*scanner*/, const char *str) {
 %token UNCLOSED_DELIM_STR "unclosed {-delimited string"
 
 %type<str>   nodename
+%type<str>   optnodename
 %type<str>   optanchor
 %type<str>   val
 %type<prop>    property
@@ -128,6 +136,7 @@ void yyerror(YYLTYPE *yylloc, void * /*scanner*/, const char *str) {
 %type<node>    optedgenode
 %type<noderef> noderef
 %type<noderef> optnoderef
+%type<pt>      optat
 
 %%
 
@@ -201,7 +210,10 @@ tikzpicture: "\\begin{tikzpicture}" optproperties tikzcmds "\\end{tikzpicture}"
 tikzcmds: tikzcmds tikzcmd | ;
 tikzcmd: node | edge | boundingbox | ignore;
 
-ignore: "\\begin{pgfonlayer}" DELIMITEDSTRING | "\\end{pgfonlayer}";
+ignore: "\\begin{pgfonlayer}" DELIMITEDSTRING
+    | "\\end{pgfonlayer}"
+    | "\\begin{scope}" optproperties
+    | "\\end{scope}";
 
 optproperties:
 	"[" "]"
@@ -240,21 +252,50 @@ property:
 val: PROPSTRING { $$ = $1; } | DELIMITEDSTRING { $$ = $1; };
 
 nodename: "(" REFSTRING ")" { $$ = $2; };
-node: "\\node" optproperties nodename "at" TCOORD DELIMITEDSTRING ";"
+optnodename: nodename { $$ = $1; } | { $$ = 0; };
+optat: "at" TCOORD { $$ = $2; }
+    | "at" noderef {
+        if ($2.node) {
+            QPointF pos = $2.node->point();
+            if ($2.anchor) {
+                pos += assembler->anchorOffset($2.node, QString::fromUtf8($2.anchor));
+                free($2.anchor);
+            }
+            if ($2.coord) delete $2.coord;
+            $$ = new QPointF(pos);
+        } else if ($2.coord) {
+            if ($2.anchor) free($2.anchor);
+            $$ = $2.coord;
+        } else {
+            if ($2.anchor) free($2.anchor);
+            if ($2.coord) delete $2.coord;
+            $$ = new QPointF(0, 0);
+        }
+    }
+    | { $$ = 0; };
+node: "\\node" optproperties optnodename optat DELIMITEDSTRING ";"
 	{
         Node *node = new Node();
 
         if ($2) {
             node->setData($2);
         }
-        //qDebug() << "node name: " << $3;
-        node->setName(QString::fromUtf8($3));
-        node->setLabel(QString::fromUtf8($6));
-        free($3);
-        free($6);
 
-        node->setPoint(*$5);
-        delete $5;
+        if ($3) {
+            node->setName(QString::fromUtf8($3));
+            free($3);
+        } else {
+            node->setName(assembler->graph()->freshNodeName());
+        }
+
+        node->setLabel(QString::fromUtf8($5));
+        free($5);
+
+        if ($4) {
+            node->setPoint(*$4);
+            delete $4;
+        }
+        // If no position given, stays at (0,0); resolved in post-processing
 
         assembler->graph()->addNode(node);
         assembler->addNodeToMap(node);
@@ -263,16 +304,75 @@ node: "\\node" optproperties nodename "at" TCOORD DELIMITEDSTRING ";"
 optanchor:  { $$ = 0; } | "." REFSTRING { $$ = $2; };
 noderef: "(" REFSTRING optanchor ")"
 	{
-        $$.node = assembler->nodeWithName(QString::fromUtf8($2));
-        free($2);
-        $$.anchor = $3;
+        QString name = QString::fromUtf8($2);
+        $$.node = assembler->nodeWithName(name);
+        $$.coord = 0;
         $$.loop = false;
         $$.cycle = false;
+
+        if (!$$.node) {
+            // Check for coordinate calculation: "a -| b" or "a |- b"
+            int hvIdx = name.indexOf(QStringLiteral(" -| "));
+            int vhIdx = name.indexOf(QStringLiteral(" |- "));
+            if (hvIdx >= 0) {
+                QString refA = name.left(hvIdx).trimmed();
+                QString refB = name.mid(hvIdx + 4).trimmed();
+                $$.coord = new QPointF(assembler->resolveCoordCalc(refA, QString(), refB, QString(), true));
+            } else if (vhIdx >= 0) {
+                QString refA = name.left(vhIdx).trimmed();
+                QString refB = name.mid(vhIdx + 4).trimmed();
+                $$.coord = new QPointF(assembler->resolveCoordCalc(refA, QString(), refB, QString(), false));
+            }
+            // Check for shifted coordinate: "[xshift=X,yshift=Y]refname"
+            else if (name.startsWith(QLatin1String("["))) {
+                int bracketEnd = name.indexOf(QLatin1Char(']'));
+                if (bracketEnd >= 0) {
+                    QString shifts = name.mid(1, bracketEnd - 1);
+                    QString refName = name.mid(bracketEnd + 1).trimmed();
+                    Node *ref = assembler->nodeWithName(refName);
+                    if (ref) {
+                        QPointF pos = ref->point();
+                        if ($3) pos += assembler->anchorOffset(ref, QString::fromUtf8($3));
+                        // Parse xshift/yshift
+                        QRegularExpression xshiftRe(QStringLiteral("xshift\\s*=\\s*([\\d.\\-]+\\s*(?:pt|cm|mm|in)?)"));
+                        QRegularExpression yshiftRe(QStringLiteral("yshift\\s*=\\s*([\\d.\\-]+\\s*(?:pt|cm|mm|in)?)"));
+                        QRegularExpressionMatch xm = xshiftRe.match(shifts);
+                        QRegularExpressionMatch ym = yshiftRe.match(shifts);
+                        if (xm.hasMatch()) {
+                            QString xval = xm.captured(1);
+                            // Quick dimension parse
+                            double xv = xval.trimmed().toDouble();
+                            if (xval.contains(QStringLiteral("pt"))) xv /= 28.45;
+                            pos.setX(pos.x() + xv);
+                        }
+                        if (ym.hasMatch()) {
+                            QString yval = ym.captured(1);
+                            double yv = yval.trimmed().toDouble();
+                            if (yval.contains(QStringLiteral("pt"))) yv /= 28.45;
+                            pos.setY(pos.y() + yv);
+                        }
+                        $$.coord = new QPointF(pos);
+                    }
+                }
+            }
+        }
+
+        free($2);
+        $$.anchor = $3;
 	};
 optnoderef:
     noderef { $$ = $1; }
-    | "(" ")" { $$.node = 0; $$.anchor = 0; $$.loop = true; $$.cycle = false; }
-    | "cycle" { $$.node = 0; $$.anchor = 0; $$.loop = false; $$.cycle = true; }
+    | "(" ")" { $$.node = 0; $$.anchor = 0; $$.loop = true; $$.cycle = false; $$.coord = 0; }
+    | "cycle" { $$.node = 0; $$.anchor = 0; $$.loop = false; $$.cycle = true; $$.coord = 0; }
+    | "++" TCOORD {
+        QPointF pos = assembler->currentDrawPos() + *$2;
+        delete $2;
+        $$.node = assembler->createSyntheticNode(pos);
+        $$.anchor = 0;
+        $$.loop = false;
+        $$.cycle = false;
+        $$.coord = 0;
+    }
 optedgenode:
 	{ $$ = 0; }
 	| "node" optproperties DELIMITEDSTRING
@@ -285,7 +385,15 @@ optedgenode:
 	}
 
 edgesource: optproperties noderef {
-        assembler->setCurrentEdgeSource($2.node);
+        Node *src = $2.node;
+        if (!src && $2.coord) {
+            src = assembler->createSyntheticNode(*$2.coord);
+            delete $2.coord;
+        }
+        assembler->setCurrentEdgeSource(src);
+        if (src) {
+            assembler->setCurrentDrawPos(src->point());
+        }
         if ($2.anchor) {
             assembler->setCurrentEdgeSourceAnchor(QString::fromUtf8($2.anchor));
             free($2.anchor);
@@ -297,8 +405,10 @@ edgesource: optproperties noderef {
 
 optedgetargets: edgetarget optedgetargets |
 
-edgetarget: "to" optproperties optedgenode optnoderef {
-        Node *s = assembler->currentEdgeSource();;
+connector: "to" | "--" | "-|" | "|-";
+
+edgetarget: connector optproperties optedgenode optnoderef {
+        Node *s = assembler->currentEdgeSource();
         Node *t;
 
         if ($4.loop) {
@@ -306,13 +416,19 @@ edgetarget: "to" optproperties optedgenode optnoderef {
         } else if ($4.cycle) {
             t = assembler->currentPathSource();
             if (!t) t = s;
-        } else {
+        } else if ($4.node) {
             t = $4.node;
+        } else if ($4.coord) {
+            t = assembler->createSyntheticNode(*$4.coord);
+            delete $4.coord;
+        } else {
+            t = 0;
         }
 
         if (s != 0 && t != 0) { // if source or target don't exist, quietly ignore edge
             Edge *e = new Edge(s, t);
             assembler->setCurrentEdgeSource(t);
+            assembler->setCurrentDrawPos(t->point());
 
             if (!assembler->currentEdgeSourceAnchor().isEmpty()) {
                 e->setSourceAnchor(assembler->currentEdgeSourceAnchor());

@@ -35,6 +35,7 @@ struct noderef {
     char *anchor;
     bool cycle;
     bool loop;
+    QPointF *coord;  // for resolved coordinates from ++ and coordinate calculations
 };
 
 inline int isatty(int) { return 0; }

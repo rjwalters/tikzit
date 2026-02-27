@@ -74,11 +74,17 @@ FLOAT \-?[0-9]*(\.[0-9]+)?
 \\tikzset                      {  return TIKZSET_CMD; }
 \\begin\{pgfonlayer\}          {  return BEGIN_PGFONLAYER_CMD; }
 \\end\{pgfonlayer\}            {  return END_PGFONLAYER_CMD; }
+\\begin\{scope\}               {  return BEGIN_SCOPE_CMD; }
+\\end\{scope\}                 {  return END_SCOPE_CMD; }
 \\draw                         {  return DRAW_CMD; }
 \\node                         {  return NODE_CMD; }
 \\path                         {  return PATH_CMD; }
 ;                              {  return SEMICOLON; }
 =                              {  return EQUALS; }
+<INITIAL>--                    {  return MINUSMINUS; }
+<INITIAL>-\|                   {  return HV_LINE; }
+<INITIAL>\|-                   {  return VH_LINE; }
+<INITIAL>\+\+                  {  return PLUSPLUS; }
 <INITIAL>rectangle             {  return RECTANGLE; }
 <INITIAL>node                  {  return NODE; }
 <INITIAL>at                    {  return AT; }

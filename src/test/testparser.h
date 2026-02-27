@@ -14,6 +14,15 @@ private slots:
     void parseEdgeBends();
     void parseBbox();
     void parseNonAsciiLabel();
+    void parseEdgeMinusMinus();
+    void parseEdgeHVLine();
+    void parsePlusPlusCoord();
+    void parseCoordCalc();
+    void parseNodeNoAt();
+    void parseNodeNoName();
+    void parseScope();
+    void parseShiftedCoordinate();
+    void parseNodeRelativePosition();
 };
 
 #endif // TESTPARSER_H

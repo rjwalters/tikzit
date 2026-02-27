@@ -28,6 +28,7 @@
 
 #include <QObject>
 #include <QHash>
+#include <QPointF>
 
 class TikzAssembler : public QObject
 {
@@ -59,6 +60,15 @@ public:
     void addEdge(Edge *e);
     void finishCurrentPath();
 
+    Node *createSyntheticNode(QPointF pos);
+    QPointF resolveCoordCalc(const QString &refA, const QString &anchorA,
+                             const QString &refB, const QString &anchorB, bool hv);
+    QPointF anchorOffset(Node *n, const QString &anchor);
+    void resolveRelativePositions();
+
+    QPointF currentDrawPos() const;
+    void setCurrentDrawPos(const QPointF &pos);
+
 signals:
 
 public slots:
@@ -71,6 +81,8 @@ private:
     Node *_currentEdgeSource;
     GraphElementData *_currentEdgeData;
     QString _currentEdgeSourceAnchor;
+    QPointF _currentDrawPos;
+    int _syntheticNodeCount;
     void *scanner;
 };
 

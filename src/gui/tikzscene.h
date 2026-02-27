@@ -85,6 +85,7 @@ public:
 
     void makePath(bool duplicateEdges);
     void splitPath();
+    void autoLayout();
 
     void getSelection(QSet<Node*> &selNodes, QSet<Edge*> &selEdges) const;
     QSet<Node*> getSelectedNodes() const;

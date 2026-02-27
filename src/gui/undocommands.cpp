@@ -19,6 +19,7 @@
 #include "undocommands.h"
 #include "nodeitem.h"
 #include "edgeitem.h"
+#include "pathitem.h"
 
 #include <QApplication>
 #include <QGraphicsView>
@@ -724,5 +725,85 @@ void SplitPathCommand::redo()
     }
 
     _scene->refreshZIndices();
+    GraphUpdateCommand::redo();
+}
+
+AutoLayoutCommand::AutoLayoutCommand(TikzScene *scene,
+                                     QMap<Node *, QPointF> oldNodePositions,
+                                     QMap<Node *, QPointF> newNodePositions,
+                                     QMap<Edge *, EdgeRouting> oldEdgeRouting,
+                                     QMap<Edge *, EdgeRouting> newEdgeRouting,
+                                     QUndoCommand *parent) :
+    GraphUpdateCommand(scene, parent),
+    _oldNodePositions(oldNodePositions),
+    _newNodePositions(newNodePositions),
+    _oldEdgeRouting(oldEdgeRouting),
+    _newEdgeRouting(newEdgeRouting)
+{
+}
+
+void AutoLayoutCommand::undo()
+{
+    // restore node positions
+    for (NodeItem *ni : _scene->nodeItems()) {
+        if (_oldNodePositions.contains(ni->node())) {
+            ni->node()->setPoint(_oldNodePositions.value(ni->node()));
+            ni->readPos();
+        }
+    }
+
+    // restore edge routing
+    for (auto it = _oldEdgeRouting.constBegin(); it != _oldEdgeRouting.constEnd(); ++it) {
+        Edge *e = it.key();
+        const EdgeRouting &r = it.value();
+        e->setBasicBendMode(r.basicBendMode);
+        e->setBend(r.bend);
+        e->setInAngle(r.inAngle);
+        e->setOutAngle(r.outAngle);
+        e->setWeight(r.weight);
+        e->updateData();
+
+        if (_scene->edgeItems().contains(e)) {
+            _scene->edgeItems()[e]->readPos();
+            Path *p = e->path();
+            if (p && _scene->pathItems().contains(p))
+                _scene->pathItems()[p]->readPos();
+        }
+    }
+
+    _scene->refreshAdjacentEdges(_oldNodePositions.keys());
+    GraphUpdateCommand::undo();
+}
+
+void AutoLayoutCommand::redo()
+{
+    // apply new node positions
+    for (NodeItem *ni : _scene->nodeItems()) {
+        if (_newNodePositions.contains(ni->node())) {
+            ni->node()->setPoint(_newNodePositions.value(ni->node()));
+            ni->readPos();
+        }
+    }
+
+    // apply new edge routing
+    for (auto it = _newEdgeRouting.constBegin(); it != _newEdgeRouting.constEnd(); ++it) {
+        Edge *e = it.key();
+        const EdgeRouting &r = it.value();
+        e->setBasicBendMode(r.basicBendMode);
+        e->setBend(r.bend);
+        e->setInAngle(r.inAngle);
+        e->setOutAngle(r.outAngle);
+        e->setWeight(r.weight);
+        e->updateData();
+
+        if (_scene->edgeItems().contains(e)) {
+            _scene->edgeItems()[e]->readPos();
+            Path *p = e->path();
+            if (p && _scene->pathItems().contains(p))
+                _scene->pathItems()[p]->readPos();
+        }
+    }
+
+    _scene->refreshAdjacentEdges(_newNodePositions.keys());
     GraphUpdateCommand::redo();
 }

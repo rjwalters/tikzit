@@ -21,6 +21,8 @@
 #include "tikzscene.h"
 #include "undocommands.h"
 #include "tikzassembler.h"
+#include "autolayout.h"
+#include "layoutconfig.h"
 
 #include <QPen>
 #include <QBrush>
@@ -466,6 +468,47 @@ void TikzScene::splitPath()
     }
 
     _tikzDocument->undoStack()->push(new SplitPathCommand(this, paths));
+}
+
+void TikzScene::autoLayout()
+{
+    if (!graph() || graph()->nodes().isEmpty()) return;
+
+    // read config from QSettings
+    QSettings settings("tikzit", "tikzit");
+    LayoutConfig config;
+    config.nodeMarginH = settings.value("autolayout-margin-h", 1.5).toDouble();
+    config.nodeMarginV = settings.value("autolayout-margin-v", 1.0).toDouble();
+    config.leftToRight = settings.value("autolayout-left-to-right", true).toBool();
+    config.traceMargin = settings.value("autolayout-trace-margin", 0.3).toDouble();
+    config.maxIterations = settings.value("autolayout-max-iterations", 50).toInt();
+
+    // capture old positions
+    QMap<Node*, QPointF> oldPositions;
+    for (Node *n : graph()->nodes()) {
+        oldPositions[n] = n->point();
+    }
+
+    // capture old edge routing
+    QMap<Edge*, EdgeRouting> oldRouting;
+    for (Edge *e : graph()->edges()) {
+        EdgeRouting r;
+        r.basicBendMode = e->basicBendMode();
+        r.bend = e->bend();
+        r.inAngle = e->inAngle();
+        r.outAngle = e->outAngle();
+        r.weight = e->weight();
+        oldRouting[e] = r;
+    }
+
+    // run auto layout
+    AutoLayoutResult result = AutoLayout::run(graph(), config);
+    if (!result.success) return;
+
+    // push undo command
+    _tikzDocument->undoStack()->push(
+        new AutoLayoutCommand(this, oldPositions, result.newPositions,
+                              oldRouting, result.newRouting));
 }
 
 void TikzScene::refreshZIndices()

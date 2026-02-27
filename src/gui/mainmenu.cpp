@@ -334,6 +334,12 @@ void MainMenu::on_actionClear_Edge_Style_triggered()
     tikzit->activeWindow()->stylePalette()->toggleClearEdgeStyle();
 }
 
+void MainMenu::on_actionAuto_Layout_triggered()
+{
+    if (tikzit->activeWindow() != 0)
+        tikzit->activeWindow()->tikzScene()->autoLayout();
+}
+
 void MainMenu::on_actionPreferences_triggered()
 {
     PreferenceDialog *d = new PreferenceDialog(this);

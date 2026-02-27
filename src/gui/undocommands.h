@@ -29,6 +29,7 @@
 #define UNDOCOMMANDS_H
 
 #include "tikzscene.h"
+#include "edgerouter.h"
 
 #include <QUndoCommand>
 #include <QSet>
@@ -284,6 +285,24 @@ private:
 
     // keep a copy of the edge lists so they can be added back to each path in undo()
     QMap<Path*,QVector<Edge*>> _edgeLists;
+};
+
+class AutoLayoutCommand : public GraphUpdateCommand
+{
+public:
+    explicit AutoLayoutCommand(TikzScene *scene,
+                               QMap<Node*,QPointF> oldNodePositions,
+                               QMap<Node*,QPointF> newNodePositions,
+                               QMap<Edge*,EdgeRouting> oldEdgeRouting,
+                               QMap<Edge*,EdgeRouting> newEdgeRouting,
+                               QUndoCommand *parent = nullptr);
+    void undo() override;
+    void redo() override;
+private:
+    QMap<Node*,QPointF> _oldNodePositions;
+    QMap<Node*,QPointF> _newNodePositions;
+    QMap<Edge*,EdgeRouting> _oldEdgeRouting;
+    QMap<Edge*,EdgeRouting> _newEdgeRouting;
 };
 
 #endif // UNDOCOMMANDS_H

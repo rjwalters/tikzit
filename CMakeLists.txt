@@ -21,6 +21,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_SOURCE_DIR}/src/data
     ${PROJECT_SOURCE_DIR}/src/gui
+    ${PROJECT_SOURCE_DIR}/src/layout
 )
 
 
@@ -63,6 +64,10 @@ set(SOURCES
     src/gui/tikzview.cpp
     src/gui/toolpalette.cpp
     src/gui/undocommands.cpp
+    src/layout/autolayout.cpp
+    src/layout/edgerouter.cpp
+    src/layout/layeredplacement.cpp
+    src/layout/layouteval.cpp
     src/main.cpp
     src/tikzit.cpp
     src/util.cpp
@@ -100,6 +105,11 @@ set(HEADERS
     src/gui/tikzview.h
     src/gui/toolpalette.h
     src/gui/undocommands.h
+    src/layout/autolayout.h
+    src/layout/edgerouter.h
+    src/layout/layeredplacement.h
+    src/layout/layoutconfig.h
+    src/layout/layouteval.h
     src/tikzit.h
     src/util.h
 )

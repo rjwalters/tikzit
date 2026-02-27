@@ -82,6 +82,7 @@ public slots:
     void on_actionPrevious_Edge_Style_triggered();
     void on_actionNext_Edge_Style_triggered();
     void on_actionClear_Edge_Style_triggered();
+    void on_actionAuto_Layout_triggered();
     void on_actionPreferences_triggered();
 
     // View

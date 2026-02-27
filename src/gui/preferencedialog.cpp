@@ -43,6 +43,12 @@ PreferenceDialog::PreferenceDialog(QWidget *parent) :
 
     ui->selectNewEdges->setChecked(settings.value("select-new-edges", false).toBool());
     ui->shiftToScroll->setChecked(settings.value("shift-to-scroll", false).toBool());
+
+    // auto layout settings
+    ui->layoutMarginH->setValue(settings.value("autolayout-margin-h", 1.5).toDouble());
+    ui->layoutMarginV->setValue(settings.value("autolayout-margin-v", 1.0).toDouble());
+    ui->layoutTraceMargin->setValue(settings.value("autolayout-trace-margin", 0.3).toDouble());
+    ui->layoutLeftToRight->setChecked(settings.value("autolayout-left-to-right", true).toBool());
 }
 
 PreferenceDialog::~PreferenceDialog()
@@ -67,6 +73,12 @@ void PreferenceDialog::accept()
     settings.setValue("select-new-edges", ui->selectNewEdges->isChecked());
     settings.setValue("shift-to-scroll", ui->shiftToScroll->isChecked());
     settings.setValue("source-font", ui->sourceFont->text());
+
+    // auto layout settings
+    settings.setValue("autolayout-margin-h", ui->layoutMarginH->value());
+    settings.setValue("autolayout-margin-v", ui->layoutMarginV->value());
+    settings.setValue("autolayout-trace-margin", ui->layoutTraceMargin->value());
+    settings.setValue("autolayout-left-to-right", ui->layoutLeftToRight->isChecked());
 
     tikzit->activeWindow()->setFont();
     QDialog::accept();

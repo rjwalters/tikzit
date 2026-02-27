@@ -130,7 +130,7 @@ void TestParser::parseEdgeBends()
     QVERIFY(g->edges()[3]->bend() == 80);
     QVERIFY(g->edges()[4]->inAngle() == 10);
     QVERIFY(g->edges()[4]->outAngle() == 150);
-    QVERIFY(g->edges()[4]->weight() == 2.0f/2.5f);
+    QVERIFY(g->edges()[4]->weight() == 2.0/2.5);
 }
 
 void TestParser::parseBbox()

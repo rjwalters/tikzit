@@ -37,20 +37,25 @@ GraphElementData *GraphElementData::copy()
 
 void GraphElementData::setProperty(QString key, QString value)
 {
-    int i = indexOfKey(key);
-    if (i != -1) {
-        _properties[i].setValue(value);
-    } else {
-        GraphElementProperty p(key, value);
-        _properties << p;
+    // search for existing key-value property (skip atoms)
+    for (int i = 0; i < _properties.size(); ++i) {
+        if (!_properties[i].atom() && _properties[i].key() == key) {
+            _properties[i].setValue(value);
+            return;
+        }
     }
+    GraphElementProperty p(key, value);
+    _properties << p;
 }
 
 void GraphElementData::unsetProperty(QString key)
 {
-    int i = indexOfKey(key);
-    if (i != -1)
-        _properties.remove(i);
+    for (int i = 0; i < _properties.size(); ++i) {
+        if (!_properties[i].atom() && _properties[i].key() == key) {
+            _properties.remove(i);
+            return;
+        }
+    }
 }
 
 void GraphElementData::add(GraphElementProperty p)
@@ -68,31 +73,39 @@ void GraphElementData::operator <<(GraphElementProperty p)
 
 void GraphElementData::setAtom(QString atom)
 {
-    int i = indexOfKey(atom);
-    if (i == -1)
-        _properties << GraphElementProperty(atom);
+    for (int i = 0; i < _properties.size(); ++i) {
+        if (_properties[i].atom() && _properties[i].key() == atom)
+            return; // already exists
+    }
+    _properties << GraphElementProperty(atom);
 }
 
 void GraphElementData::unsetAtom(QString atom)
 {
-    int i = indexOfKey(atom);
-    if (i != -1)
-        _properties.remove(i);
+    for (int i = 0; i < _properties.size(); ++i) {
+        if (_properties[i].atom() && _properties[i].key() == atom) {
+            _properties.remove(i);
+            return;
+        }
+    }
 }
 
 QString GraphElementData::property(QString key)
 {
-    int i = indexOfKey(key);
-    if (i != -1) {
-        return _properties[i].value();
-    } else {
-        return QString(); // null QString
+    for (int i = 0; i < _properties.size(); ++i) {
+        if (!_properties[i].atom() && _properties[i].key() == key)
+            return _properties[i].value();
     }
+    return QString(); // null QString
 }
 
 bool GraphElementData::hasProperty(QString key)
 {
-    return (indexOfKey(key) != -1);
+    for (int i = 0; i < _properties.size(); ++i) {
+        if (!_properties[i].atom() && _properties[i].key() == key)
+            return true;
+    }
+    return false;
 }
 
 bool GraphElementData::atom(QString atom)

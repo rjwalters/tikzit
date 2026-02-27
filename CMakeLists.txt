@@ -152,3 +152,47 @@ target_link_libraries(${PROJECT_NAME}
     "${QT_VER}::Pdf")
 
 install (TARGETS tikzit DESTINATION bin)
+
+
+# Tests
+enable_testing()
+find_package(${QT_VER} REQUIRED COMPONENTS Test)
+
+set(TEST_SOURCES
+    src/test/testmain.cpp
+    src/test/testtest.cpp
+    src/test/testparser.cpp
+    src/test/testtikzoutput.cpp
+)
+
+set(TEST_HEADERS
+    src/test/testtest.h
+    src/test/testparser.h
+    src/test/testtikzoutput.h
+)
+
+# Use the same app sources minus main.cpp (data layer is coupled to GUI)
+set(APP_SOURCES ${SOURCES})
+list(FILTER APP_SOURCES EXCLUDE REGEX "src/main\\.cpp$")
+
+add_executable(tikzit-tests
+    ${TEST_SOURCES}
+    ${TEST_HEADERS}
+    ${APP_SOURCES}
+    ${HEADERS}
+    ${FORM_HEADERS}
+    ${FLEX_LEXER_OUTPUTS}
+    ${BISON_PARSER_OUTPUTS}
+    ${QT_RESOURCES}
+)
+
+target_link_libraries(tikzit-tests
+    "${QT_VER}::Core"
+    "${QT_VER}::Gui"
+    "${QT_VER}::Widgets"
+    "${QT_VER}::Network"
+    "${QT_VER}::Pdf"
+    "${QT_VER}::Test"
+)
+
+add_test(NAME tikzit-tests COMMAND tikzit-tests)

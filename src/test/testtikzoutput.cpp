@@ -60,7 +60,7 @@ void TestTikzOutput::graphFromTikz()
     Graph *g = new Graph();
     TikzAssembler ga(g);
 
-    QString tikz =
+    QString input =
     "\\begin{tikzpicture}\n"
     "\t\\path [use as bounding box] (-1.5,-1.5) rectangle (1.5,1.5);\n"
     "\t\\begin{pgfonlayer}{nodelayer}\n"
@@ -74,9 +74,27 @@ void TestTikzOutput::graphFromTikz()
     "\t\t\\draw [style=diredge] (0) to ();\n"
     "\t\\end{pgfonlayer}\n"
     "\\end{tikzpicture}\n";
-    bool res = ga.parse(tikz);
+
+    // canonical output after updateData(): anchors are stripped for
+    // non-blank nodes and self-loops get the "loop" atom
+    QString expected =
+    "\\begin{tikzpicture}\n"
+    "\t\\path [use as bounding box] (-1.5,-1.5) rectangle (1.5,1.5);\n"
+    "\t\\begin{pgfonlayer}{nodelayer}\n"
+    "\t\t\\node [style=white dot] (0) at (-1, -1) {};\n"
+    "\t\t\\node [style=white dot] (1) at (0, 1) {};\n"
+    "\t\t\\node [style=white dot] (2) at (1, -1) {};\n"
+    "\t\\end{pgfonlayer}\n"
+    "\t\\begin{pgfonlayer}{edgelayer}\n"
+    "\t\t\\draw [style=diredge] (1) to (2);\n"
+    "\t\t\\draw [style=diredge] (2) to (0);\n"
+    "\t\t\\draw [style=diredge, loop] (0) to ();\n"
+    "\t\\end{pgfonlayer}\n"
+    "\\end{tikzpicture}\n";
+
+    bool res = ga.parse(input);
     QVERIFY2(res, "parsed successfully");
-    QVERIFY2(g->tikz() == tikz, "produced matching tikz");
+    QVERIFY2(g->tikz() == expected, "produced matching tikz");
 
     delete g;
 }

@@ -23,6 +23,7 @@
 #include <QDebug>
 #include <QSettings>
 #include <QMessageBox>
+#include <QInputDialog>
 
 MainMenu::MainMenu()
 {
@@ -351,6 +352,43 @@ void MainMenu::on_actionShow_Node_Labels_triggered()
     if (tikzit->activeWindow() != 0) {
         tikzit->activeWindow()->tikzScene()->setDrawNodeLabels(ui.actionShow_Node_Labels->isChecked());
         tikzit->activeWindow()->tikzScene()->invalidate();
+    }
+}
+
+void MainMenu::on_actionShow_Preview_triggered()
+{
+    MainWindow *win = tikzit->activeWindow();
+    if (!win) return;
+
+    bool checked = ui.actionShow_Preview->isChecked();
+    win->previewPanel()->setEnabled(checked);
+    win->tikzScene()->setPreviewVisible(checked);
+
+    // If just enabled, trigger a compilation
+    if (checked) {
+        win->previewPanel()->compileNow();
+    }
+}
+
+void MainMenu::on_actionSet_Preamble_triggered()
+{
+    MainWindow *win = tikzit->activeWindow();
+    if (!win || !win->previewPanel()) return;
+
+    bool ok;
+    QString text = QInputDialog::getMultiLineText(
+        this, "Set LaTeX Preamble",
+        "Enter additional LaTeX preamble lines\n"
+        "(e.g. \\usepackage{amsmath}):",
+        win->previewPanel()->preamble(),
+        &ok);
+
+    if (ok) {
+        win->previewPanel()->setPreamble(text);
+        // Recompile preview if enabled
+        if (win->previewPanel()->enabled()) {
+            win->previewPanel()->compileNow();
+        }
     }
 }
 

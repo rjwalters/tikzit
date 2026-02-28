@@ -99,10 +99,9 @@ void TikzDocument::open(QString fileName)
         refreshTikz();
         setClean();
     } else {
-       // QMessageBox::critical(NULL, tr("Error"),
-       //         tr("Could not parse tikz file."));
         newGraph->deleteLater();
         _parseSuccess = false;
+        _parseError = ass.errorMessage();
     }
 }
 
@@ -233,6 +232,11 @@ QString TikzDocument::shortName() const
 bool TikzDocument::parseSuccess() const
 {
     return _parseSuccess;
+}
+
+QString TikzDocument::parseError() const
+{
+    return _parseError;
 }
 
 void TikzDocument::refreshTikz()

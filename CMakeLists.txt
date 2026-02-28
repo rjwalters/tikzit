@@ -71,6 +71,7 @@ set(SOURCES
     src/gui/mainwindow.cpp
     src/gui/nodeitem.cpp
     src/gui/preferencedialog.cpp
+    src/gui/previewpanel.cpp
     src/gui/previewwindow.cpp
     src/gui/propertypalette.cpp
     src/gui/styleeditor.cpp
@@ -112,6 +113,7 @@ set(HEADERS
     src/gui/mainwindow.h
     src/gui/nodeitem.h
     src/gui/preferencedialog.h
+    src/gui/previewpanel.h
     src/gui/previewwindow.h
     src/gui/propertypalette.h
     src/gui/styleeditor.h

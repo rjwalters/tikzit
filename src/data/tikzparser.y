@@ -70,9 +70,8 @@
 #define assembler yyget_extra(scanner)
 
 /* pass errors off to the assembler */
-void yyerror(YYLTYPE *yylloc, void * /*scanner*/, const char *str) {
-	// TODO: implement reportError()
-	//assembler->reportError(str, yylloc);
+void yyerror(YYLTYPE *yylloc, void *scanner, const char *str) {
+    assembler->reportError(QString::fromUtf8(str), yylloc->first_line);
     qDebug() << "\nparse error: " << str << " line:" << yylloc->first_line;
 }
 %}
@@ -226,6 +225,12 @@ properties: extraproperties property
         $1->add(*$2);
         delete $2;
         $$ = $1;
+	}
+	| extraproperties property ","
+	{
+        $1->add(*$2);
+        delete $2;
+        $$ = $1;
 	};
 extraproperties:
 	extraproperties property ","
@@ -317,11 +322,13 @@ noderef: "(" REFSTRING optanchor ")"
             if (hvIdx >= 0) {
                 QString refA = name.left(hvIdx).trimmed();
                 QString refB = name.mid(hvIdx + 4).trimmed();
-                $$.coord = new QPointF(assembler->resolveCoordCalc(refA, QString(), refB, QString(), true));
+                QString anchorB = $3 ? QString::fromUtf8($3) : QString();
+                $$.coord = new QPointF(assembler->resolveCoordCalc(refA, QString(), refB, anchorB, true));
             } else if (vhIdx >= 0) {
                 QString refA = name.left(vhIdx).trimmed();
                 QString refB = name.mid(vhIdx + 4).trimmed();
-                $$.coord = new QPointF(assembler->resolveCoordCalc(refA, QString(), refB, QString(), false));
+                QString anchorB = $3 ? QString::fromUtf8($3) : QString();
+                $$.coord = new QPointF(assembler->resolveCoordCalc(refA, QString(), refB, anchorB, false));
             }
             // Check for shifted coordinate: "[xshift=X,yshift=Y]refname"
             else if (name.startsWith(QLatin1String("["))) {
@@ -339,17 +346,10 @@ noderef: "(" REFSTRING optanchor ")"
                         QRegularExpressionMatch xm = xshiftRe.match(shifts);
                         QRegularExpressionMatch ym = yshiftRe.match(shifts);
                         if (xm.hasMatch()) {
-                            QString xval = xm.captured(1);
-                            // Quick dimension parse
-                            double xv = xval.trimmed().toDouble();
-                            if (xval.contains(QStringLiteral("pt"))) xv /= 28.45;
-                            pos.setX(pos.x() + xv);
+                            pos.setX(pos.x() + parseDimension(xm.captured(1)));
                         }
                         if (ym.hasMatch()) {
-                            QString yval = ym.captured(1);
-                            double yv = yval.trimmed().toDouble();
-                            if (yval.contains(QStringLiteral("pt"))) yv /= 28.45;
-                            pos.setY(pos.y() + yv);
+                            pos.setY(pos.y() + parseDimension(ym.captured(1)));
                         }
                         $$.coord = new QPointF(pos);
                     }
@@ -407,7 +407,7 @@ optedgetargets: edgetarget optedgetargets |
 
 connector: "to" | "--" | "-|" | "|-";
 
-edgetarget: connector optproperties optedgenode optnoderef {
+edgetarget: connector optproperties optedgenode optnoderef optedgenode {
         Node *s = assembler->currentEdgeSource();
         Node *t;
 
@@ -443,7 +443,8 @@ edgetarget: connector optproperties optedgenode optnoderef {
                 assembler->setCurrentEdgeSourceAnchor(QString());
             }
 
-            if ($3) e->setEdgeNode($3);
+            Node *en = $3 ? $3 : $5;
+            if (en) e->setEdgeNode(en);
 
             GraphElementData *cd = assembler->currentEdgeData();
             if ($2) {

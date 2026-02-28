@@ -12,6 +12,7 @@
 #include "mainmenu.h"
 #include "toolpalette.h"
 #include "stylepalette.h"
+#include "previewpanel.h"
 
 #include <QMainWindow>
 #include <QGraphicsView>
@@ -36,8 +37,9 @@ public:
     TikzView *tikzView() const;
     TikzScene *tikzScene() const;
     TikzDocument *tikzDocument() const;
-    ToolPalette *toolPalette() const;    
+    ToolPalette *toolPalette() const;
     StylePalette *stylePalette() const;
+    PreviewPanel *previewPanel() const;
     QSplitter *splitter() const;
     QString tikzSource();
     void setSourceLine(int line);
@@ -48,17 +50,23 @@ public slots:
     void on_tikzSource_textChanged();
     void updateFileName();
     void refreshTikz();
+    void onPreviewReady(const QImage &image, const QRectF &tikzBBox);
+    void onPreviewFailed(const QString &errorMessage);
 protected:
     void closeEvent(QCloseEvent *event) override;
     void changeEvent(QEvent *event) override;
 
 private:
+    QString patchedPreviewSource();
+
     TikzScene *_tikzScene;
     TikzDocument *_tikzDocument;
     MainMenu *_menu;
     ToolPalette *_toolPalette;
     StylePalette *_stylePalette;
+    PreviewPanel *_previewPanel;
     Ui::MainWindow *ui;
+    QString _originalTikzSource;
     int _windowId;
     static int _numWindows;
 };

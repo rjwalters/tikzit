@@ -5,9 +5,11 @@
 #include "tikzassembler.h"
 #include "toolpalette.h"
 #include "tikzit.h"
+#include "util.h"
 
 #include <QDebug>
 #include <QFile>
+#include <QTextStream>
 #include <QList>
 #include <QSettings>
 #include <QMessageBox>
@@ -17,6 +19,7 @@
 #include <QIcon>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <QRegularExpression>
 
 int MainWindow::_numWindows = 0;
 
@@ -48,6 +51,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     _tikzScene = new TikzScene(_tikzDocument, _toolPalette, _stylePalette, this);
     ui->tikzView->setScene(_tikzScene);
+
+    // Preview panel is a hidden background compilation engine
+    _previewPanel = new PreviewPanel(this);
+    connect(_previewPanel, &PreviewPanel::pdfReady,
+            this, &MainWindow::onPreviewReady);
+    connect(_previewPanel, &PreviewPanel::compileFailed,
+            this, &MainWindow::onPreviewFailed);
 
     // TODO: check if each window should have a menu
     _menu = new MainMenu();
@@ -125,14 +135,32 @@ void MainWindow::open(QString fileName)
         _tikzScene->setTikzDocument(_tikzDocument);
         updateFileName();
     } else {
-        // show alert that parse failed
-        QMessageBox::warning(this, "Parse failed", "Cannot read TiKZ source");
+        QString msg = "Cannot read TiKZ source.";
+        QString details = _tikzDocument->parseError();
+        if (!details.isEmpty()) {
+            msg += "\n\n" + details;
+        }
+        QMessageBox::warning(this, "Parse failed", msg);
     }
 
+    // Store original file content for preview patching (the graph model
+    // roundtrip is lossy, so we patch the original source with updated
+    // node positions instead of regenerating from scratch)
+    QFile previewFile(fileName);
+    if (previewFile.open(QIODevice::ReadOnly)) {
+        QTextStream in(&previewFile);
+        _originalTikzSource = in.readAll();
+        _previewPanel->scheduleUpdate(_originalTikzSource);
+        previewFile.close();
+    }
 }
 
 QSplitter *MainWindow::splitter() const {
     return ui->splitter;
+}
+
+PreviewPanel *MainWindow::previewPanel() const {
+    return _previewPanel;
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -205,12 +233,69 @@ void MainWindow::updateFileName()
     setWindowTitle(nm + " - TikZiT");
 }
 
+QString MainWindow::patchedPreviewSource()
+{
+    // Patch the original tikz source with current node positions from the
+    // graph model.  For each node, find its \node command in the original
+    // source by name and insert/replace the "at (x, y)" clause.  This
+    // preserves the original file's style definitions, custom colors, draw
+    // commands, etc. while reflecting position changes from the canvas.
+
+    // Build name→position map from current graph
+    QMap<QString, QPointF> positions;
+    for (Node *n : _tikzDocument->graph()->nodes()) {
+        if (!n->name().isEmpty() && !n->name().startsWith("__synthetic"))
+            positions[n->name()] = n->point();
+    }
+
+    if (positions.isEmpty())
+        return _originalTikzSource;
+
+    QString result = _originalTikzSource;
+
+    // For each known node, find \node...(name) and ensure it has at (x, y)
+    for (auto it = positions.constBegin(); it != positions.constEnd(); ++it) {
+        QString name = QRegularExpression::escape(it.key());
+        QPointF pos = it.value();
+        QString atStr = QString("at (%1, %2)")
+            .arg(floatToString(pos.x()))
+            .arg(floatToString(pos.y()));
+
+        // Match: \node ... (name) [optional "at (x, y)"]
+        // The \node can have options in [...] before the name.
+        // We capture everything up to and including (name), then
+        // optionally match an existing "at (...)" clause.
+        QRegularExpression re(
+            "(\\\\node\\b[^;]*?\\(" + name + "\\))"  // group 1: \node...(name)
+            "(\\s*at\\s*\\([^)]*\\))?"                // group 2: optional existing at clause
+        );
+
+        QRegularExpressionMatch m = re.match(result);
+        if (m.hasMatch()) {
+            // Replace the matched region with group1 + new at clause
+            QString replacement = m.captured(1) + " " + atStr;
+            result.replace(m.capturedStart(), m.capturedLength(), replacement);
+        }
+    }
+
+    return result;
+}
+
 void MainWindow::refreshTikz()
 {
     // don't emit textChanged() when we update the tikz
     ui->tikzSource->blockSignals(true);
     ui->tikzSource->setText(_tikzDocument->tikz());
     ui->tikzSource->blockSignals(false);
+
+    // If we have original file source, patch it with current node positions
+    // so the preview preserves styles/colors from the original file.
+    // Otherwise fall back to the regenerated tikz.
+    if (!_originalTikzSource.isEmpty()) {
+        _previewPanel->scheduleUpdate(patchedPreviewSource());
+    } else {
+        _previewPanel->scheduleUpdate(_tikzDocument->tikz());
+    }
 }
 
 ToolPalette *MainWindow::toolPalette() const
@@ -241,6 +326,21 @@ TikzView *MainWindow::tikzView() const
 void MainWindow::on_tikzSource_textChanged()
 {
     if (_tikzScene->enabled()) _tikzScene->setEnabled(false);
+
+    // User is editing source directly — the original file source is
+    // no longer the authority, so clear it and preview the editor content.
+    _originalTikzSource.clear();
+    _previewPanel->scheduleUpdate(ui->tikzSource->toPlainText());
+}
+
+void MainWindow::onPreviewReady(const QImage &image, const QRectF &tikzBBox)
+{
+    _tikzScene->setPreviewBackground(image, tikzBBox);
+}
+
+void MainWindow::onPreviewFailed(const QString &errorMessage)
+{
+    qDebug() << "Preview compilation failed:" << errorMessage;
 }
 
 

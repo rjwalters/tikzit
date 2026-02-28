@@ -35,9 +35,12 @@
 #include <QWidget>
 #include <QGraphicsScene>
 #include <QPainter>
+#include <QPixmap>
+#include <QImage>
 #include <QRectF>
 #include <QVector>
 #include <QGraphicsEllipseItem>
+#include <QGraphicsPixmapItem>
 #include <QGraphicsSceneMouseEvent>
 
 class TikzScene : public QGraphicsScene
@@ -98,6 +101,11 @@ public:
     bool drawNodeLabels() const;
     void setDrawNodeLabels(bool drawNodeLabels);
 
+    void setPreviewBackground(const QImage &image, const QRectF &tikzBBox);
+    void clearPreviewBackground();
+    bool previewVisible() const;
+    void setPreviewVisible(bool visible);
+
 public slots:
     void graphReplaced();
     void refreshZIndices();
@@ -139,6 +147,10 @@ private:
     bool _smartTool;
 
     bool _ctrlWasPressed;
+
+    QGraphicsPixmapItem *_previewBackground;
+    bool _previewVisible;
+    QRectF _lastTikzBBox;
 };
 
 #endif // TIKZSCENE_H

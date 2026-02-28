@@ -40,6 +40,7 @@ public:
     QString tikz() const;
     QUndoStack *undoStack() const;
     bool parseSuccess() const;
+    QString parseError() const;
     void refreshTikz();
 
     void open(QString fileName);
@@ -63,6 +64,7 @@ private:
     QString _shortName;
     QUndoStack *_undoStack;
     bool _parseSuccess;
+    QString _parseError;
     void addToRecentFiles();
 
 signals:

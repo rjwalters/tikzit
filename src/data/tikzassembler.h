@@ -40,6 +40,9 @@ public:
     Node *nodeWithName(QString name);
     bool parse(const QString &tikz);
 
+    void reportError(const QString &msg, int line);
+    QString errorMessage() const;
+
     Graph *graph() const;
     TikzStyles *tikzStyles() const;
     bool isGraph() const;
@@ -83,6 +86,7 @@ private:
     QString _currentEdgeSourceAnchor;
     QPointF _currentDrawPos;
     int _syntheticNodeCount;
+    QString _errorMessage;
     void *scanner;
 };
 

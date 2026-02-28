@@ -74,6 +74,12 @@ TikzScene::TikzScene(TikzDocument *tikzDocument, ToolPalette *tools,
 
     _highlightHeads = false;
     _highlightTails = false;
+
+    _previewBackground = new QGraphicsPixmapItem();
+    _previewBackground->setZValue(-1000); // behind everything
+    _previewBackground->setVisible(false);
+    addItem(_previewBackground);
+    _previewVisible = false;
 }
 
 TikzScene::~TikzScene() {
@@ -1466,4 +1472,86 @@ QMap<Edge*,EdgeItem*> &TikzScene::edgeItems()
 QMap<Path *, PathItem *> &TikzScene::pathItems()
 {
     return _pathItems;
+}
+
+void TikzScene::setPreviewBackground(const QImage &image, const QRectF &tikzBBox)
+{
+    _lastTikzBBox = tikzBBox;
+
+    // The tikzBBox is in TeX points (1pt = 1/72.27 inch).
+    // tikzfig style applies scale=0.5, so 1 TikZ unit = 0.5cm in the PDF.
+    // 1cm = 28.3465pt, so 1 TikZ unit = 14.17325pt.
+    //
+    // In scene coordinates, 1 TikZ unit = GLOBAL_SCALE = 40 pixels.
+    //
+    // The image was rendered at 4x the point size. So:
+    //   image pixels = tex_points * 4
+    //   scene pixels = tikz_units * GLOBAL_SCALE
+    //
+    // We need: scene_pixels / image_pixels = (GLOBAL_SCALE) / (14.17325 * 4)
+    // = 40 / 56.693 = 0.7056
+
+    qreal texPtPerTikzUnit = 14.17325; // 0.5cm in TeX points
+    qreal renderScale = 4.0; // must match PreviewPanel::renderPdf
+    qreal scaleRatio = GLOBAL_SCALEF / (texPtPerTikzUnit * renderScale);
+
+    QPixmap pixmap = QPixmap::fromImage(image);
+    _previewBackground->setPixmap(pixmap);
+    _previewBackground->setTransformationMode(Qt::SmoothTransformation);
+
+    // Set scale so image maps correctly to scene coordinates
+    _previewBackground->setScale(scaleRatio);
+
+    // Position: the PDF page contains the tikzpicture box.
+    // The page has 1pt margin on each side (from geometry package).
+    // The tikzpicture origin (0,0) in TikZ coords maps to scene (0,0).
+    //
+    // The savebox dimensions tell us the size of the tikzpicture.
+    // In the PDF, the tikzpicture is at (1pt margin, 1pt margin) from page origin.
+    //
+    // We need to find where the TikZ origin is within the box.
+    // The TikZ bounding box's lower-left corner in TikZ coordinates can be
+    // computed from the graph's bounding box.
+
+    QRectF graphBBox = graph()->realBbox(); // in TikZ coordinates
+
+    // The image left edge (after 1pt margin) corresponds to graphBBox.left() in TikZ units.
+    // The image top edge (after 1pt margin) corresponds to graphBBox.top() in TikZ units.
+    // (Note: TikZ y increases upward, scene y increases downward)
+
+    qreal marginPt = 1.0; // from geometry package margin=1pt
+    qreal marginImagePx = marginPt * renderScale;
+    qreal marginScenePx = marginImagePx * scaleRatio;
+
+    // Scene position of the image's top-left corner:
+    // graphBBox.left() in TikZ coords → scene x = graphBBox.left() * GLOBAL_SCALE
+    // graphBBox.top() in TikZ coords → scene y = -graphBBox.top() * GLOBAL_SCALE (y-flip)
+    // Subtract the margin offset
+    qreal sceneX = graphBBox.left() * GLOBAL_SCALEF - marginScenePx;
+    qreal sceneY = -graphBBox.top() * GLOBAL_SCALEF - marginScenePx;
+
+    _previewBackground->setPos(sceneX, sceneY);
+    _previewBackground->setVisible(_previewVisible);
+
+    if (_previewVisible)
+        invalidate(QRect(), QGraphicsScene::AllLayers);
+}
+
+void TikzScene::clearPreviewBackground()
+{
+    _previewBackground->setPixmap(QPixmap());
+    _previewBackground->setVisible(false);
+    invalidate(QRect(), QGraphicsScene::AllLayers);
+}
+
+bool TikzScene::previewVisible() const
+{
+    return _previewVisible;
+}
+
+void TikzScene::setPreviewVisible(bool visible)
+{
+    _previewVisible = visible;
+    _previewBackground->setVisible(visible && !_previewBackground->pixmap().isNull());
+    invalidate(QRect(), QGraphicsScene::AllLayers);
 }

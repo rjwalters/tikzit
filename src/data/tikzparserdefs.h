@@ -38,6 +38,35 @@ struct noderef {
     QPointF *coord;  // for resolved coordinates from ++ and coordinate calculations
 };
 
+inline double parseDimension(const QString &s)
+{
+    // Parse a dimension value, converting to cm.
+    // Supports: plain numbers (assumed cm), Xpt, Xcm, Xmm, Xin, Xem, Xex
+    QString trimmed = s.trimmed();
+    double val = 0;
+    QString unit;
+
+    // Extract numeric prefix and unit suffix
+    int i = 0;
+    // Allow leading minus/plus
+    if (i < trimmed.length() && (trimmed[i] == '-' || trimmed[i] == '+')) i++;
+    while (i < trimmed.length() && (trimmed[i].isDigit() || trimmed[i] == '.')) i++;
+
+    bool ok;
+    val = trimmed.left(i).toDouble(&ok);
+    if (!ok) return 0;
+
+    unit = trimmed.mid(i).trimmed().toLower();
+
+    if (unit.isEmpty() || unit == "cm") return val;
+    if (unit == "pt") return val / 28.45;
+    if (unit == "mm") return val / 10.0;
+    if (unit == "in") return val * 2.54;
+    if (unit == "em") return val * 0.35;  // approximate
+    if (unit == "ex") return val * 0.15;  // approximate
+    return val; // unknown unit, treat as cm
+}
+
 inline int isatty(int) { return 0; }
 
 #endif // TIKZPARSERDEFS_H

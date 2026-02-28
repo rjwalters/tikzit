@@ -105,6 +105,7 @@
    <addaction name="actionRevert"/>
    <addaction name="actionJump_to_Selection"/>
    <addaction name="actionRun_LaTeX"/>
+   <addaction name="actionSet_Preamble"/>
    <addaction name="actionAuto_Layout"/>
    <addaction name="separator"/>
    <addaction name="menuNode_Style"/>
@@ -118,6 +119,8 @@
    <addaction name="actionZoom_In"/>
    <addaction name="actionZoom_Out"/>
    <addaction name="actionShow_Node_Labels"/>
+   <addaction name="separator"/>
+   <addaction name="actionShow_Preview"/>
   </widget>
   <widget class="QMenu" name="menuHelp">
    <property name="title">
@@ -485,6 +488,19 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+B</string>
+   </property>
+  </action>
+  <action name="actionShow_Preview">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Preview</string>
+   </property>
+  </action>
+  <action name="actionSet_Preamble">
+   <property name="text">
+    <string>Set LaTeX Preamble...</string>
    </property>
   </action>
   <addaction name="menuFile"/>

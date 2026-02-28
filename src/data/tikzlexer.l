@@ -52,6 +52,8 @@
 %s noderef
 
 FLOAT \-?[0-9]*(\.[0-9]+)?
+UNIT (pt|cm|mm|in|em|ex)
+FLOATDIM {FLOAT}{UNIT}?
 
 %%
 
@@ -91,21 +93,21 @@ FLOAT \-?[0-9]*(\.[0-9]+)?
 <INITIAL>to                    {  return TO; }
 <INITIAL>cycle                 {  return CYCLE; }
 
-\([ ]*{FLOAT}[ ]*,[ ]*{FLOAT}[ ]*\) {
+\([ ]*{FLOATDIM}[ ]*,[ ]*{FLOATDIM}[ ]*\) {
 	yylloc->last_column = yylloc->first_column + 1;
 	yyless(1);
 	BEGIN(xcoord);
 }
-<xcoord>{FLOAT} {
+<xcoord>{FLOATDIM} {
     yylval->pt = new QPointF();
     QString s(yytext);
-    yylval->pt->setX(s.toDouble());
+    yylval->pt->setX(parseDimension(s));
 	BEGIN(ycoord);
 }
 <ycoord>, {  }
-<ycoord>{FLOAT} {
+<ycoord>{FLOATDIM} {
     QString s(yytext);
-    yylval->pt->setY(s.toDouble());
+    yylval->pt->setY(parseDimension(s));
 }
 <ycoord>\) {
 	BEGIN(INITIAL);
